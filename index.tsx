@@ -1,446 +1,559 @@
-import React, { useState, useEffect } from "react";
-import { createRoot } from "react-dom/client";
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { 
+  CheckCircle, 
+  MapPin, 
+  Building, 
+  Phone, 
+  Mail, 
+  Menu, 
+  X, 
+  Star,
+  ShieldCheck,
+  Briefcase,
+  ArrowRight,
+  Calculator,
+  ChevronDown
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Composants SVG Icones (Pour éviter les dépendances externes) ---
-interface IconProps {
-  className?: string;
-}
+const App = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const PhoneIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-);
-const CheckIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>
-);
-const ClipboardIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-);
-const KeyIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.75m.25-2.25l1-1 3 3"></path></svg>
-);
-const CubeIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-);
-const ClockIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-);
-const MapPinIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-);
-const ChevronRightIcon = ({ className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>
-);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-// --- Composants UI ---
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 80; // height of sticky nav
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  children: React.ReactNode;
-}
-
-const Button = ({ children, variant = 'primary', className = '', ...props }: ButtonProps) => {
-  const baseStyle = "inline-flex items-center justify-center px-6 py-3 border text-base font-semibold rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2";
-  
-  const variants = {
-    primary: "border-transparent text-dark bg-gold hover:bg-goldhover shadow-sm focus:ring-gold",
-    secondary: "border-white text-white hover:bg-white hover:text-forest focus:ring-white",
-    outline: "border-forest text-forest bg-transparent hover:bg-forest hover:text-white",
-    ghost: "border-transparent text-dark hover:bg-gray-100",
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      setIsMenuOpen(false);
+    }
   };
 
   return (
-    <button className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
-      {children}
-    </button>
-  );
-};
+    <div className="min-h-screen flex flex-col font-sans">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo */}
+            <div className="flex items-center gap-2 cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
+              <div className="bg-brand-800 p-2.5 rounded-lg text-white group-hover:bg-brand-700 transition shadow-lg shadow-brand-900/10">
+                <Briefcase size={24} />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-serif text-xl font-bold text-slate-900 leading-none">
+                  EDL Lille<span className="text-brand-600">.Expert</span>
+                </span>
+                <span className="text-xs text-slate-500 font-medium tracking-wide">ÉTAT DES LIEUX INDÉPENDANT</span>
+              </div>
+            </div>
 
-// --- Sections ---
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center space-x-8">
+              <button onClick={() => scrollToSection('tarifs')} className="text-slate-900 hover:text-brand-700 font-bold transition flex items-center gap-1">
+                Nos Tarifs
+              </button>
+              <button onClick={() => scrollToSection('expertise')} className="text-slate-600 hover:text-brand-700 font-medium transition">
+                Expertise
+              </button>
+              <button onClick={() => scrollToSection('secteur')} className="text-slate-600 hover:text-brand-700 font-medium transition">
+                Secteur
+              </button>
+              <button 
+                onClick={() => scrollToSection('tarifs')}
+                className="bg-brand-700 text-white px-6 py-2.5 rounded-full font-bold hover:bg-brand-800 transition shadow-lg shadow-brand-700/20 flex items-center gap-2 transform hover:-translate-y-0.5"
+              >
+                Voir les Prix
+                <ArrowRight size={18} />
+              </button>
+            </div>
 
-const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        {/* Logo Text */}
-        <div className={`text-2xl font-bold tracking-tight ${isScrolled ? 'text-forest' : 'text-white'}`}>
-          Lille<span className={isScrolled ? 'text-gold' : 'text-gold'}>Inventaire</span>
-        </div>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center space-x-8">
-          <a href="#services" className={`font-medium hover:text-gold transition-colors ${isScrolled ? 'text-dark' : 'text-white'}`}>Services</a>
-          <a href="#process" className={`font-medium hover:text-gold transition-colors ${isScrolled ? 'text-dark' : 'text-white'}`}>Processus</a>
-          <a href="#about" className={`font-medium hover:text-gold transition-colors ${isScrolled ? 'text-dark' : 'text-white'}`}>Zone d'intervention</a>
-          
-          <div className="flex items-center space-x-4 ml-4">
-            <a href="tel:0600000000" className={`font-semibold flex items-center ${isScrolled ? 'text-dark' : 'text-white'}`}>
-              <PhoneIcon className="w-4 h-4 mr-2" />
-              06 00 00 00 00
-            </a>
-            <Button variant="primary" className="py-2 px-4 text-sm">
-              Devis Rapide
-            </Button>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center">
+              <button onClick={toggleMenu} className="text-slate-700 p-2 hover:bg-slate-100 rounded-lg transition">
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile Menu Icon (Placeholder) */}
-        <div className="md:hidden">
-             <Button variant="primary" className="py-2 px-3 text-xs">Devis</Button>
-        </div>
-      </div>
-    </nav>
-  );
-};
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-white border-b border-slate-200 overflow-hidden shadow-xl"
+            >
+              <div className="px-4 py-6 space-y-4">
+                <button onClick={() => scrollToSection('tarifs')} className="flex items-center justify-between w-full text-left px-4 py-3 bg-brand-50 rounded-lg text-brand-800 font-bold border border-brand-100">
+                  <span>Consulter les Tarifs</span>
+                  <ArrowRight size={16} />
+                </button>
+                <button onClick={() => scrollToSection('expertise')} className="block w-full text-left px-4 py-2 text-slate-600 font-medium border-l-2 border-transparent hover:border-brand-300 hover:bg-slate-50 hover:text-brand-700 transition">Notre Expertise</button>
+                <button onClick={() => scrollToSection('secteur')} className="block w-full text-left px-4 py-2 text-slate-600 font-medium border-l-2 border-transparent hover:border-brand-300 hover:bg-slate-50 hover:text-brand-700 transition">Zone d'intervention</button>
+                <button onClick={() => scrollToSection('contact')} className="block w-full text-center bg-brand-800 text-white px-4 py-3 rounded-lg font-bold shadow-md">Prendre Rendez-vous</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
 
-const Hero = () => {
-  return (
-    <section className="relative bg-forest pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        {/* Abstract Pattern */}
-        <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path d="M0 100 C 20 0 50 0 100 100 Z" fill="#fff" />
-        </svg>
-      </div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center lg:text-left">
-        <div className="lg:w-2/3">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            L’expert de vos états des lieux sur la <span className="text-gold">Métropole Lilloise</span>.
-          </h1>
-          <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto lg:mx-0">
-            Sécurisez vos locations grâce à une expertise indépendante à Lille, Roubaix, Tourcoing et environs. Conformité Loi Alur garantie.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Button variant="primary" className="shadow-lg transform hover:-translate-y-1">
-              Obtenir un devis gratuit
-            </Button>
-            <Button variant="secondary">
-              Découvrir nos services
-            </Button>
+      {/* Hero Section */}
+      <section className="relative bg-slate-900 text-white pt-24 pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1464938050520-ef2270bb8ce8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2074&q=80" 
+            alt="Lille Grand Place Architecture" 
+            className="w-full h-full object-cover opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-900"></div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-5 py-1.5 mb-8 backdrop-blur-md shadow-lg">
+              <MapPin size={16} className="text-brand-400" />
+              <span className="text-sm font-semibold text-white tracking-wide">Intervention sur Lille & Métropole</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold mb-8 leading-tight tracking-tight">
+              L'État des Lieux <br className="hidden md:block"/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-brand-200 to-white">Professionnel & Sécurisé</span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Ne prenez plus de risques avec vos locations. Nous réalisons des états des lieux certifiés, détaillés et impartiaux pour sécuriser propriétaires et locataires.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
+              <button 
+                onClick={() => scrollToSection('tarifs')}
+                className="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition shadow-xl shadow-brand-500/20 flex items-center justify-center gap-3 transform hover:-translate-y-1"
+              >
+                <Calculator size={20} />
+                Voir nos Tarifs Forfaitaires
+              </button>
+              <button 
+                onClick={() => scrollToSection('contact')}
+                className="w-full sm:w-auto bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg transition flex items-center justify-center gap-3 hover:border-white/40"
+              >
+                Nous Contacter
+              </button>
+            </div>
+            
+            <div className="mt-16 flex justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition duration-500">
+               {/* Trust signals / Logos text */}
+               <div className="text-center">
+                 <span className="block font-bold text-2xl text-white">100%</span>
+                 <span className="text-xs uppercase tracking-widest text-brand-200">Loi Alur</span>
+               </div>
+               <div className="text-center">
+                 <span className="block font-bold text-2xl text-white">48h</span>
+                 <span className="text-xs uppercase tracking-widest text-brand-200">Rapport PDF</span>
+               </div>
+               <div className="text-center">
+                 <span className="block font-bold text-2xl text-white">7/7</span>
+                 <span className="text-xs uppercase tracking-widest text-brand-200">Intervention</span>
+               </div>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-white/30 hidden md:block">
+          <ChevronDown size={32} />
+        </div>
+      </section>
+
+      {/* Pricing Section - MOVED UP as requested */}
+      <section id="tarifs" className="py-24 bg-slate-50 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 mb-6">Tarifs Clairs & Sans Surprise</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Nos prix sont forfaitaires selon la surface. Le déplacement est inclus sur Lille et la proche couronne.
+            </p>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-};
 
-const MainService = () => {
-  return (
-    <section id="services" className="py-20 bg-cream">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
-          
-          {/* Illustration Area */}
-          <div className="relative mb-12 lg:mb-0">
-            <div className="absolute top-0 left-0 -ml-4 -mt-4 w-full h-full bg-gold rounded-lg transform translate-x-4 translate-y-4 opacity-20"></div>
-            <div className="relative bg-white rounded-lg shadow-xl p-8 border-l-4 border-forest">
-              <div className="flex items-center mb-6">
-                <div className="bg-forest/10 p-3 rounded-full mr-4">
-                  <ClipboardIcon className="w-8 h-8 text-forest" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-dark">Rapport d'État des Lieux</h3>
-                  <p className="text-sm text-gray-500">Document certifié conforme</p>
-                </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20 relative z-10">
+            {/* 20m2 */}
+            <PricingCard 
+              title="Studio / T1"
+              subtitle="Surface < 20m²"
+              price="120"
+              features={['État des lieux Entrée ou Sortie', 'Rapport PDF avec photos', 'Signature électronique', 'Déplacement Lille inclus']}
+              onClick={() => scrollToSection('contact')}
+            />
+            {/* 40m2 */}
+            <PricingCard 
+              title="Appartement T2"
+              subtitle="Surface < 40m²"
+              price="150"
+              popular
+              features={['État des lieux Entrée ou Sortie', 'Rapport PDF avec photos', 'Signature électronique', 'Déplacement Lille inclus']}
+              onClick={() => scrollToSection('contact')}
+            />
+            {/* 70m2 */}
+            <PricingCard 
+              title="Grand Appt / T3"
+              subtitle="Surface < 70m²"
+              price="190"
+              features={['État des lieux Entrée ou Sortie', 'Rapport PDF avec photos', 'Signature électronique', 'Déplacement Lille inclus']}
+              onClick={() => scrollToSection('contact')}
+            />
+            {/* 100m2+ */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col hover:border-brand-300 transition-all duration-300 h-full">
+              <div className="mb-4">
+                <span className="bg-slate-100 text-slate-600 font-bold tracking-wider text-xs uppercase px-3 py-1 rounded-full">Sur Mesure</span>
+                <h3 className="text-2xl font-bold text-slate-900 mt-4">T4 / Maison</h3>
+                <p className="text-slate-500 text-sm mt-2">Surface > 100m²</p>
               </div>
-              <div className="space-y-4">
-                {[
-                  "Inventaire détaillé pièce par pièce",
-                  "Relevé des compteurs inclus",
-                  "Photos HD illimitées des dégradations",
-                  "Signature électronique sécurisée",
-                  "Comparatif Entrée / Sortie"
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center">
-                    <CheckIcon className="w-5 h-5 text-gold mr-3 flex-shrink-0" />
-                    <span className="text-gray-700">{item}</span>
-                  </div>
-                ))}
+              <div className="my-6">
+                <span className="text-3xl font-bold text-slate-900">Sur Devis</span>
               </div>
+              <ul className="space-y-4 mb-8 flex-1">
+                <li className="flex items-start gap-3 text-slate-600 text-sm">
+                  <CheckCircle size={18} className="text-brand-600 shrink-0 mt-0.5" />
+                  <span>Maisons individuelles</span>
+                </li>
+                <li className="flex items-start gap-3 text-slate-600 text-sm">
+                  <CheckCircle size={18} className="text-brand-600 shrink-0 mt-0.5" />
+                  <span>Locaux Commerciaux</span>
+                </li>
+                <li className="flex items-start gap-3 text-slate-600 text-sm">
+                  <CheckCircle size={18} className="text-brand-600 shrink-0 mt-0.5" />
+                  <span>Jardins, Caves & Annexes</span>
+                </li>
+              </ul>
+              <button 
+                onClick={() => scrollToSection('contact')}
+                className="w-full py-4 px-4 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-brand-600 hover:text-brand-600 transition bg-transparent"
+              >
+                Demander un devis
+              </button>
             </div>
           </div>
 
-          {/* Copy Area */}
-          <div>
-            <h2 className="text-3xl font-bold text-forest mb-6">
-              L’état des lieux professionnel : votre meilleure protection locative.
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Que vous soyez propriétaire bailleur ou administrateur de biens, nous garantissons un constat impartial et exhaustif pour apaiser la relation locataire-propriétaire.
-            </p>
+          {/* Bundle Section */}
+          <div className="bg-gradient-to-br from-brand-950 via-brand-900 to-slate-900 rounded-3xl p-8 md:p-14 text-white relative overflow-hidden shadow-2xl mx-auto max-w-6xl">
+            {/* Decorative blurs */}
+            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-brand-500 rounded-full blur-[100px] opacity-30"></div>
+            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-purple-500 rounded-full blur-[100px] opacity-20"></div>
             
-            <div className="space-y-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-forest text-white">
-                    <span className="font-bold text-xl">1</span>
+            <div className="grid md:grid-cols-2 gap-12 items-center relative z-10">
+              <div>
+                <div className="inline-block bg-yellow-400 text-yellow-950 font-bold px-4 py-1.5 rounded-full text-sm mb-6 shadow-lg shadow-yellow-400/20">
+                  Offre Spéciale Bailleurs
+                </div>
+                <h3 className="text-3xl md:text-4xl font-serif font-bold mb-6 leading-tight">
+                  Vous gérez plusieurs biens ? <br/>
+                  <span className="text-brand-300">Groupez et Économisez.</span>
+                </h3>
+                <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+                  Idéal pour les multipropriétaires ou les agences. Commandez un pack de 3 états des lieux et bénéficiez d'un tarif préférentiel.
+                </p>
+                
+                <div className="space-y-6 bg-white/5 p-6 rounded-2xl border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-brand-500/20 rounded-full flex items-center justify-center text-brand-300 font-bold">3x</div>
+                      <div>
+                        <p className="font-bold text-white">Pack Studios (20m²)</p>
+                        <p className="text-slate-400 text-sm">Prix unitaire normal : 360€</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-white">300€</p>
+                      <p className="text-sm font-bold text-green-400">-60€ d'économie</p>
+                    </div>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <h4 className="text-lg font-medium text-dark">Neutralité absolue</h4>
-                  <p className="mt-1 text-gray-500">Un tiers de confiance expert pour éviter tout litige au moment de la sortie.</p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center shadow-xl">
+                <ShieldCheck size={48} className="mx-auto text-brand-300 mb-6" />
+                <h4 className="text-2xl font-bold mb-3">Réservez votre Pack</h4>
+                <p className="text-slate-300 mb-8">
+                  Paiement sécurisé en ligne. Vos crédits d'intervention sont valables 12 mois sur toute la métropole.
+                </p>
+                <button 
+                  onClick={() => scrollToSection('contact')}
+                  className="w-full bg-white text-brand-900 py-4 rounded-xl font-bold text-lg hover:bg-brand-50 transition shadow-lg hover:shadow-white/20"
+                >
+                  Commander ce Pack (300€)
+                </button>
+                <p className="text-xs text-slate-400 mt-4 italic">
+                  Facture immédiate pour votre comptabilité.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Expertise Section */}
+      <section id="expertise" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-4">Pourquoi passer par un Expert ?</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              L'état des lieux est le document juridique le plus important de votre location. Une erreur peut vous coûter cher à la sortie.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-10">
+            <FeatureCard 
+              icon={<ShieldCheck size={36} />}
+              title="Conformité Loi ALUR"
+              description="Nos rapports sont rédigés sur des logiciels professionnels agrées, respectant les dernières normes juridiques pour garantir vos droits."
+            />
+            <FeatureCard 
+              icon={<Briefcase size={36} />}
+              title="Expertise Technique"
+              description="Nous vérifions méthodiquement plus de 100 points de contrôle : plomberie, électricité, menuiseries, sols et murs."
+            />
+            <FeatureCard 
+              icon={<MapPin size={36} />}
+              title="Ancrage Local"
+              description="Basés à Lille, nous connaissons les spécificités du bâti local (Vieux-Lille, 1930, résidences récentes)."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Secteur Section */}
+      <section id="secteur" className="py-24 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div className="order-2 md:order-1">
+              <div className="inline-flex items-center gap-2 text-brand-600 font-bold mb-4 uppercase tracking-wider text-sm">
+                <MapPin size={18} />
+                Zone d'intervention
+              </div>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-6">Lille & Métropole</h2>
+              <p className="text-slate-600 mb-8 text-lg leading-relaxed">
+                Nous intervenons 6j/7 sur l'ensemble de la métropole. Notre tarification est transparente : aucun frais caché pour le déplacement dans la zone principale.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex gap-5 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-brand-300 transition group">
+                  <div className="bg-green-100 p-3 rounded-lg text-green-700 h-fit group-hover:bg-green-600 group-hover:text-white transition">
+                    <CheckCircle size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-lg">Zone Inclus (0€)</h4>
+                    <p className="text-slate-600 mt-1">Lille, La Madeleine, Marcq-en-Barœul, Saint-André, Lambersart, Lomme, Hellemmes.</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-5 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-brand-300 transition group">
+                  <div className="bg-brand-100 p-3 rounded-lg text-brand-700 h-fit group-hover:bg-brand-600 group-hover:text-white transition">
+                    <Building size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-lg">Zone Métropole (+15€)</h4>
+                    <p className="text-slate-600 mt-1">Roubaix, Tourcoing, Villeneuve d'Ascq, Croix, Wasquehal, Mouvaux, Mons-en-Barœul.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="order-1 md:order-2 h-[400px] bg-slate-200 rounded-3xl overflow-hidden relative shadow-2xl border-4 border-white">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Lille_OpenStreetMap.png/1200px-Lille_OpenStreetMap.png" 
+                className="w-full h-full object-cover grayscale opacity-60 hover:grayscale-0 transition duration-700"
+                alt="Carte Lille"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="bg-white/90 backdrop-blur px-6 py-4 rounded-xl border-l-4 border-brand-600 shadow-lg">
+                  <p className="font-bold text-slate-900">Vous êtes hors zone ?</p>
+                  <p className="text-sm text-slate-600">Contactez-nous pour un devis personnalisé incluant les frais kilométriques.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Form Section */}
+      <section id="contact" className="py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-3xl shadow-xl p-8 md:p-12 border border-slate-100">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-4">Réserver un Expert</h2>
+              <p className="text-slate-500 text-lg">
+                Remplissez ce formulaire pour valider une intervention ou obtenir des renseignements.
+              </p>
+            </div>
+
+            <form className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Nom Complet</label>
+                  <div className="relative">
+                    <input type="text" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Votre nom" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Téléphone</label>
+                  <div className="relative">
+                    <input type="tel" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="06 XX XX XX XX" />
+                  </div>
                 </div>
               </div>
               
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-forest text-white">
-                    <span className="font-bold text-xl">2</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h4 className="text-lg font-medium text-dark">Gain de temps précieux</h4>
-                  <p className="mt-1 text-gray-500">Fini les déplacements et les rendez-vous conflictuels, nous gérons tout pour vous.</p>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1">Type de bien</label>
+                <select className="w-full pl-4 pr-10 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800 appearance-none">
+                  <option value="" disabled selected>Sélectionnez une surface</option>
+                  <option>Studio / T1 (&lt; 20m²) - 120€</option>
+                  <option>Appartement T2 (&lt; 40m²) - 150€</option>
+                  <option>Grand Appt / T3 (&lt; 70m²) - 190€</option>
+                  <option>Maison / Grand Surface - Sur devis</option>
+                  <option>Pack Investisseur (3 x Studios) - 300€</option>
+                </select>
               </div>
-            </div>
 
-            <div className="mt-10">
-               <a href="#" className="text-forest font-semibold hover:text-gold transition-colors inline-flex items-center">
-                 Planifier un état des lieux <ChevronRightIcon className="w-5 h-5 ml-1" />
-               </a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const SecondaryServices = () => {
-  return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-dark">Services Complémentaires</h2>
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Pour une gestion locative 100% déléguée et sereine.</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Card 1 */}
-          <div className="bg-gold rounded-xl p-8 text-dark shadow-soft transform hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 bg-white/20 w-32 h-32 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
-            <KeyIcon className="w-10 h-10 mb-6 text-forest relative z-10" />
-            <h3 className="text-2xl font-bold mb-4 relative z-10">Délégation de visites</h3>
-            <p className="mb-6 text-dark/90 relative z-10">
-              Ne perdez plus votre temps dans les transports. Nous assurons l'accueil des candidats locataires, la présentation du bien et la remontée des dossiers complets.
-            </p>
-            <a href="#" className="inline-block border-b-2 border-forest pb-1 font-semibold hover:text-white transition-colors relative z-10">
-              Voir les forfaits visites
-            </a>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-gold rounded-xl p-8 text-dark shadow-soft transform hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 bg-white/20 w-32 h-32 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
-            <CubeIcon className="w-10 h-10 mb-6 text-forest relative z-10" />
-            <h3 className="text-2xl font-bold mb-4 relative z-10">Visites Virtuelles & 3D</h3>
-            <p className="mb-6 text-dark/90 relative z-10">
-              Valorisez votre bien avec une immersion 3D haute définition (technologie Matterport). Idéal pour louer plus vite et limiter les visites inutiles.
-            </p>
-            <a href="#" className="inline-block border-b-2 border-forest pb-1 font-semibold hover:text-white transition-colors relative z-10">
-              Découvrir la technologie 3D
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const WhyUs = () => {
-  const features = [
-    {
-      title: "Expertise 100% Locale",
-      desc: "Une connaissance parfaite du marché locatif de la métropole lilloise.",
-      icon: <MapPinIcon className="w-6 h-6 text-white" />
-    },
-    {
-      title: "Flexibilité Horaire",
-      desc: "Des créneaux adaptés aux disponibilités de vos locataires (y compris le samedi).",
-      icon: <ClockIcon className="w-6 h-6 text-white" />
-    },
-    {
-      title: "Réactivité Immédiate",
-      desc: "Devis et prise de rendez-vous sous 24h. Rapports envoyés instantanément.",
-      icon: <CheckIcon className="w-6 h-6 text-white" />
-    }
-  ];
-
-  return (
-    <section className="py-20 bg-gray-50 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-forest">Pourquoi nous faire confiance ?</h2>
-        </div>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center p-6">
-              <div className="w-14 h-14 bg-forest rounded-full flex items-center justify-center mb-6 shadow-md">
-                {feature.icon}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1">Ville d'intervention</label>
+                <input type="text" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Ex: Lille Centre, Roubaix..." />
               </div>
-              <h3 className="text-xl font-bold text-dark mb-3">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
-const Process = () => {
-  return (
-    <section id="process" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-dark mb-16">Un processus simple en 4 étapes</h2>
-        
-        <div className="relative">
-          {/* Connecting Line (Desktop) */}
-          <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1">Message (Facultatif)</label>
+                <textarea rows={3} className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Disponibilités souhaitées, contraintes horaires, digicode..."></textarea>
+              </div>
+
+              <button className="w-full bg-brand-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-brand-700 transition shadow-xl shadow-brand-500/20 transform hover:-translate-y-1 flex justify-center items-center gap-2">
+                Envoyer ma demande
+                <ArrowRight size={20} />
+              </button>
+              <p className="text-xs text-center text-slate-400 mt-4">
+                En cliquant sur envoyer, vous acceptez d'être recontacté pour confirmer le rendez-vous.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-12">
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-2 mb-6 text-white">
+              <div className="bg-brand-700 p-2 rounded text-white">
+                <Briefcase size={20} />
+              </div>
+              <span className="font-serif text-2xl font-bold">EDL Lille.Expert</span>
+            </div>
+            <p className="mb-8 max-w-sm leading-relaxed text-slate-400">
+              Le spécialiste de l'état des lieux indépendant sur la métropole Lilloise. Nous aidons propriétaires et agences à sécuriser leurs locations avec des rapports impartiaux et conformes.
+            </p>
+          </div>
           
-          <div className="grid md:grid-cols-4 gap-8 relative z-10">
-            {[
-              { title: "Contact & Devis", desc: "Appel ou formulaire en 2 min." },
-              { title: "Planification", desc: "Nous fixons le RDV locataire." },
-              { title: "Intervention", desc: "État des lieux sur tablette." },
-              { title: "Réception", desc: "Rapport PDF immédiat." }
-            ].map((step, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm md:shadow-none md:border-none flex flex-col items-center text-center">
-                <div className="w-10 h-10 rounded-full bg-gold text-forest font-bold text-xl flex items-center justify-center mb-4 border-4 border-white shadow-sm">
-                  {idx + 1}
-                </div>
-                <h3 className="text-lg font-bold text-dark mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-500">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const MapSection = () => {
-  return (
-    <section id="about" className="flex flex-col md:flex-row bg-forest text-white">
-      <div className="md:w-1/2 p-12 lg:p-20 flex flex-col justify-center">
-        <h2 className="text-3xl font-bold mb-6">Zone d'intervention & À Propos</h2>
-        <p className="text-lg text-gray-300 mb-6">
-          Basés au cœur de Lille, nous intervenons sur l'ensemble de la métropole : Lille Centre, Vieux-Lille, La Madeleine, Marcq-en-Barœul, Lambersart, Roubaix, Tourcoing et Villeneuve d'Ascq.
-        </p>
-        <p className="text-gray-300 mb-8">
-          Structure indépendante et réactive, Lille Inventaire s'adapte aux contraintes des professionnels de l'immobilier et des particuliers exigeants.
-        </p>
-        <div className="flex items-center space-x-2 text-gold font-semibold">
-          <MapPinIcon className="w-5 h-5" />
-          <span>Aucun frais de déplacement sur la MEL</span>
-        </div>
-      </div>
-      <div className="md:w-1/2 bg-gray-200 min-h-[400px] relative">
-         {/* Abstract Map Representation */}
-         <div className="absolute inset-0 bg-gray-300 flex items-center justify-center overflow-hidden">
-             <div className="w-full h-full bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/e4/Lille_Metropole_map.png')] bg-cover bg-center opacity-40 grayscale"></div>
-             <div className="absolute inset-0 bg-forest/20"></div>
-             <div className="absolute z-10 bg-white p-4 rounded-lg shadow-lg text-dark">
-                <p className="font-bold flex items-center"><MapPinIcon className="w-4 h-4 text-gold mr-2"/> Lille Métropole</p>
-             </div>
-         </div>
-      </div>
-    </section>
-  );
-};
-
-const Footer = () => {
-  return (
-    <footer className="bg-dark text-white pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:flex lg:justify-between lg:items-center mb-12 border-b border-gray-700 pb-12">
-          <div className="mb-8 lg:mb-0">
-            <h2 className="text-3xl font-bold mb-2">Prêt à sécuriser votre location ?</h2>
-            <p className="text-gray-400">Confiez vos états des lieux à un spécialiste lillois.</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button variant="primary" className="font-bold text-dark">
-              06 00 00 00 00
-            </Button>
-            <Button className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-dark">
-              Demander mon devis
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid md:grid-cols-3 gap-8 mb-12 text-sm text-gray-400">
           <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider">Lille Inventaire</h4>
-            <p>Expert en états des lieux indépendants pour particuliers et professionnels.</p>
+            <h4 className="text-white font-bold mb-6 text-lg">Menu</h4>
+            <ul className="space-y-3">
+              <li><button onClick={() => scrollToSection('tarifs')} className="hover:text-brand-400 transition flex items-center gap-2"><span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span> Nos Tarifs</button></li>
+              <li><button onClick={() => scrollToSection('expertise')} className="hover:text-brand-400 transition flex items-center gap-2"><span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span> Notre Expertise</button></li>
+              <li><button onClick={() => scrollToSection('secteur')} className="hover:text-brand-400 transition flex items-center gap-2"><span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span> Zone d'intervention</button></li>
+            </ul>
           </div>
+
           <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider">Contact</h4>
-            <p className="mb-2">Lille, France</p>
-            <p className="mb-2">contact@lille-inventaire.fr</p>
-            <p>Lun - Sam : 08h - 20h</p>
-          </div>
-          <div>
-             <h4 className="text-white font-bold mb-4 uppercase tracking-wider">Légal</h4>
-             <ul className="space-y-2">
-               <li><a href="#" className="hover:text-gold">Mentions Légales</a></li>
-               <li><a href="#" className="hover:text-gold">CGV</a></li>
-               <li><a href="#" className="hover:text-gold">Politique de confidentialité</a></li>
-             </ul>
+            <h4 className="text-white font-bold mb-6 text-lg">Coordonnées</h4>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <MapPin size={20} className="text-brand-500 shrink-0 mt-0.5" /> 
+                <span>Lille & Métropole<br/><span className="text-xs text-slate-500">Hauts-de-France</span></span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={20} className="text-brand-500 shrink-0" /> 
+                <a href="mailto:contact@edl-lille.expert" className="hover:text-white transition">contact@edl-lille.expert</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone size={20} className="text-brand-500 shrink-0" /> 
+                <span>06 XX XX XX XX</span>
+              </li>
+            </ul>
           </div>
         </div>
-
-        <div className="text-center text-xs text-gray-600 pt-8 border-t border-gray-800">
-          © {new Date().getFullYear()} Lille Inventaire. Tous droits réservés.
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
+          <p>&copy; {new Date().getFullYear()} EDL Lille Expert. Tous droits réservés.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-white transition">Mentions Légales</a>
+            <a href="#" className="hover:text-white transition">CGV</a>
+            <a href="#" className="hover:text-white transition">Politique de Confidentialité</a>
+          </div>
         </div>
-      </div>
-    </footer>
-  );
-};
-
-const StickyMobileFooter = () => {
-  return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-      <a href="tel:0600000000" className="flex-1 bg-forest text-white py-4 flex justify-center items-center font-bold text-sm">
-        <PhoneIcon className="w-4 h-4 mr-2" /> Appeler
-      </a>
-      <button className="flex-1 bg-gold text-dark py-4 flex justify-center items-center font-bold text-sm">
-        <ClipboardIcon className="w-4 h-4 mr-2" /> Devis Gratuit
-      </button>
+      </footer>
     </div>
   );
 };
 
-const App = () => {
-  return (
-    <div className="font-sans text-dark antialiased bg-white selection:bg-gold selection:text-dark pb-16 md:pb-0">
-      <Navbar />
-      <main>
-        <Hero />
-        <MainService />
-        <SecondaryServices />
-        <WhyUs />
-        <Process />
-        <MapSection />
-      </main>
-      <Footer />
-      <StickyMobileFooter />
-    </div>
-  );
-};
+// Sub-components
+const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
+  <div className="bg-slate-50 p-8 rounded-2xl hover:shadow-xl hover:shadow-slate-200/50 transition duration-300 border border-slate-100 group">
+    <div className="text-brand-600 mb-6 bg-white w-16 h-16 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white transition duration-300">{icon}</div>
+    <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
+    <p className="text-slate-600 leading-relaxed">{description}</p>
+  </div>
+);
 
-const root = createRoot(document.getElementById("root"));
-root.render(<App />);
+const PricingCard = ({ title, subtitle, price, features, popular, onClick }: { title: string, subtitle: string, price: string, features: string[], popular?: boolean, onClick: () => void }) => (
+  <div className={`relative bg-white rounded-2xl shadow-sm border p-8 flex flex-col transition-all duration-300 hover:-translate-y-2 h-full ${popular ? 'border-brand-500 ring-4 ring-brand-500/10 shadow-xl z-10' : 'border-slate-200 hover:border-brand-300 hover:shadow-lg'}`}>
+    {popular && (
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
+        Recommandé
+      </div>
+    )}
+    <div className="mb-4">
+      <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+      <p className="text-slate-500 text-sm mt-1 font-medium">{subtitle}</p>
+    </div>
+    <div className="my-6 flex items-baseline">
+      <span className="text-5xl font-bold text-slate-900 tracking-tight">{price}€</span>
+      <span className="text-slate-400 ml-2 font-medium">TTC</span>
+    </div>
+    <ul className="space-y-4 mb-8 flex-1">
+      {features.map((feature, idx) => (
+        <li key={idx} className="flex items-start gap-3 text-slate-600 text-sm">
+          <CheckCircle size={18} className="text-brand-600 shrink-0 mt-0.5" />
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+    <button 
+      onClick={onClick}
+      className={`w-full py-4 px-4 rounded-xl font-bold transition shadow-lg ${popular ? 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow-brand-500/25' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 hover:text-slate-900'}`}
+    >
+      Réserver
+    </button>
+  </div>
+);
+
+const container = document.getElementById('root');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
+}
+
+export default App;
