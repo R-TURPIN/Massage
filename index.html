@@ -3,14 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>État des Lieux Lille | Expert Indépendant - Tarifs dès 120€</title>
-    <meta name="description" content="Expert en état des lieux à Lille et métropole. Tarifs forfaitaires clairs : Studio 120€, T2 150€. Rapports conformes loi ALUR. Réservation en ligne." />
+    
+    <title>État des Lieux Lille | Expert Indépendant & Tarifs Forfaitaires</title>
+    
+    <meta name="description" content="Expert en état des lieux à Lille et métropole. Tarifs fixes dès 120€. Pack investisseur et rapports conformes loi ALUR sous 48h. Sécurisez vos locations." />
+    <meta name="keywords" content="état des lieux lille, expert état des lieux, tarif état des lieux, gestion locative lille, inventaire, loi alur" />
     <meta name="robots" content="index, follow" />
     
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
     
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <script>
       tailwind.config = {
         theme: {
@@ -49,7 +54,6 @@
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "react-dom": "https://esm.sh/react-dom@18.2.0",
         "framer-motion": "https://esm.sh/framer-motion@10.16.4",
         "lucide-react": "https://esm.sh/lucide-react@0.292.0"
       }
@@ -58,6 +62,6 @@
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased scroll-smooth selection:bg-brand-200 selection:text-brand-900">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="text/babel" data-type="module" src="/index.tsx"></script>
   </body>
 </html>
