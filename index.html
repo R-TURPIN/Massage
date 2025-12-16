@@ -3,52 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lille Inventaire - Expert États des Lieux</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>État des Lieux Lille | Expert Indépendant - Tarifs dès 120€</title>
+    <meta name="description" content="Expert en état des lieux à Lille et métropole. Tarifs forfaitaires clairs : Studio 120€, T2 150€. Rapports conformes loi ALUR. Réservation en ligne." />
+    <meta name="keywords" content="état des lieux lille, expert état des lieux, prix état des lieux lille, inventaire location, gestion locative nord, état des lieux sortie" />
+    <meta name="robots" content="index, follow" />
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
             },
             colors: {
-              forest: '#205A28',
-              gold: '#D4A574',
-              goldhover: '#C09060',
-              dark: '#2C3539',
-              cream: '#F5EFE6',
-            },
-            boxShadow: {
-              'soft': '0 4px 6px -1px rgba(32, 90, 40, 0.1), 0 2px 4px -1px rgba(32, 90, 40, 0.06)',
+              brand: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+                950: '#082f49',
+              }
             }
           }
         }
       }
     </script>
+    
     <style>
-      /* Smooth scrolling for anchor links */
-      html {
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .scroll-smooth {
         scroll-behavior: smooth;
       }
     </style>
-  <script type="importmap">
+
+    <!-- Import Map clean & stable -->
+    <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.1/",
-    "react": "https://esm.sh/react@^19.2.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.1/"
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "framer-motion": "https://esm.sh/framer-motion@10.16.4",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
-</head>
-  <body>
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased scroll-smooth selection:bg-brand-200 selection:text-brand-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
