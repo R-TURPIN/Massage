@@ -12,13 +12,25 @@ import {
   ArrowRight,
   Calculator,
   ChevronDown,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+// On importe la connexion à PocketBase
+import { pb } from './pocketbase';
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedPack, setSelectedPack] = useState("");
+  
+  // États pour le formulaire
+  const [formData, setFormData] = useState({
+    nom_complet: '',
+    telephone: '',
+    ville: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -39,6 +51,40 @@ const App = () => {
   const handleBooking = (packName: string) => {
     setSelectedPack(packName);
     scrollToSection('contact');
+  };
+
+  // Gestion des champs du formulaire
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // Envoi vers PocketBase
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // On crée la donnée dans la collection 'demandes'
+      await pb.collection('demandes').create({
+        ...formData,
+        pack: selectedPack || 'Aucun pack sélectionné',
+        email: 'client@contact.fr' // Champ technique si tu ne le demandes pas au client
+      });
+
+      alert("✅ Demande reçue avec succès ! Un expert va vous recontacter sous 2h.");
+      // Reset du formulaire
+      setFormData({ nom_complet: '', telephone: '', ville: '', message: '' });
+      setSelectedPack("");
+      
+    } catch (error) {
+      console.error("Erreur PocketBase:", error);
+      alert("❌ Une erreur est survenue. Merci de nous contacter par téléphone.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -135,7 +181,6 @@ const App = () => {
               <span className="text-sm font-semibold text-white tracking-wide">Lille & Métropole (Déplacement Inclus)</span>
             </div>
             
-            {/* SEO H1: Très important pour Google */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold mb-8 leading-tight tracking-tight">
               Votre Expert <br className="hidden md:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-brand-200 to-white">État des Lieux à Lille</span>
@@ -224,7 +269,6 @@ const App = () => {
               <div className="mb-4">
                 <span className="bg-slate-100 text-slate-600 font-bold tracking-wider text-xs uppercase px-3 py-1 rounded-full">Sur Mesure</span>
                 <h3 className="text-2xl font-bold text-slate-900 mt-4">T4 / Maison</h3>
-                {/* CORRECTION ICI: Remplacement de > par &gt; pour éviter l'erreur JSX */}
                 <p className="text-slate-500 text-sm mt-2">Surface &gt; 100m²</p>
               </div>
               <div className="my-6">
@@ -405,28 +449,45 @@ const App = () => {
               </p>
             </div>
 
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1">Nom Complet</label>
                   <div className="relative">
-                    <input type="text" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Votre nom" />
+                    <input 
+                      name="nom_complet"
+                      value={formData.nom_complet}
+                      onChange={handleChange}
+                      type="text" 
+                      required
+                      className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" 
+                      placeholder="Votre nom" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1">Téléphone</label>
                   <div className="relative">
-                    <input type="tel" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="06 XX XX XX XX" />
+                    <input 
+                      name="telephone"
+                      value={formData.telephone}
+                      onChange={handleChange}
+                      type="tel" 
+                      required
+                      className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" 
+                      placeholder="06 XX XX XX XX" 
+                    />
                   </div>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Formule souhaitée</label>
-                {/* CORRECTION ICI: Remplacement de < par &lt; dans les options */}
                 <select 
+                  name="pack"
+                  value={selectedPack}
+                  onChange={(e) => setSelectedPack(e.target.value)}
                   className="w-full pl-4 pr-10 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800 appearance-none"
-                  defaultValue={selectedPack}
                 >
                   <option value="" disabled>Sélectionnez une prestation</option>
                   <option value="Studio (120€)">Studio / T1 (&lt; 20m²) - 120€</option>
@@ -439,17 +500,45 @@ const App = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Ville du bien</label>
-                <input type="text" className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Ex: Lille Centre, Roubaix..." />
+                <input 
+                  name="ville"
+                  value={formData.ville}
+                  onChange={handleChange}
+                  type="text" 
+                  required
+                  className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" 
+                  placeholder="Ex: Lille Centre, Roubaix..." 
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Précisions (Date souhaitée, digicode...)</label>
-                <textarea rows={3} className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" placeholder="Bonjour, je souhaiterais un état des lieux pour la semaine prochaine..."></textarea>
+                <textarea 
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={3} 
+                  className="w-full pl-4 pr-4 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800" 
+                  placeholder="Bonjour, je souhaiterais un état des lieux pour la semaine prochaine..."
+                ></textarea>
               </div>
 
-              <button className="w-full bg-brand-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-brand-700 transition shadow-xl shadow-brand-500/20 transform hover:-translate-y-1 flex justify-center items-center gap-2">
-                Envoyer la demande de réservation
-                <ArrowRight size={20} />
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-brand-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-brand-700 transition shadow-xl shadow-brand-500/20 transform hover:-translate-y-1 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    Envoyer la demande de réservation
+                    <ArrowRight size={20} />
+                  </>
+                )}
               </button>
               <p className="text-xs text-center text-slate-400 mt-4">
                 En cliquant sur envoyer, vous acceptez d'être recontacté pour valider le rendez-vous. Paiement sur place ou sur facture.
