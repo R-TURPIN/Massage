@@ -1,12 +1,20 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-
-// J'ai supprimé la ligne "import './index.css'" ici car le fichier n'existe pas
-// et que Tailwind est chargé via le fichier index.html
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import App from './App' // Ton site vitrine (Landing Page)
+import Dashboard from './Dashboard' // Ton nouvel outil
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        {/* Route par défaut (Le site public) */}
+        <Route path="/" element={<App />} />
+        
+        {/* Route secrète (L'outil de ton pote) */}
+        <Route path="/app" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>,
 )
