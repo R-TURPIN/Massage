@@ -61,27 +61,52 @@ const App = () => {
     });
   };
 
-  // Envoi vers PocketBase
+  // Envoi vers PocketBase + Redirection Cal.com
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // On crée la donnée dans la collection 'demandes'
+      // 1. On sauvegarde d'abord le lead dans PocketBase (Sécurité)
       await pb.collection('demandes').create({
         ...formData,
         pack: selectedPack || 'Aucun pack sélectionné',
-        email: 'client@contact.fr' // Champ technique si tu ne le demandes pas au client
+        email: 'client@contact.fr' // Champ technique
       });
 
-      alert("✅ Demande reçue avec succès ! Un expert va vous recontacter sous 2h.");
-      // Reset du formulaire
+      // 2. Logique de redirection vers le bon agenda Cal.com
+      const baseUrl = "https://cal.com/robin-turpin-0c4mae";
+      let eventSlug = "edl-appart"; // Valeur par défaut (1h)
+
+      // Analyse du choix du client pour l'envoyer au bon endroit
+      if (selectedPack.includes("Studio")) {
+        eventSlug = "edl-studio"; // 30 min
+      } else if (selectedPack.includes("Maison") || selectedPack.includes("Devis") || selectedPack.includes("Investisseur")) {
+        eventSlug = "edl-maison"; // 2h (pour les gros biens ou les packs)
+      } else {
+        // Pour T2, T3 (le reste)
+        eventSlug = "edl-appart"; // 1h
+      }
+
+      // 3. Construction de l'URL avec pré-remplissage des données
+      const notesContext = `Tél: ${formData.telephone} | Ville: ${formData.ville} | Message: ${formData.message}`;
+      
+      const finalUrl = `${baseUrl}/${eventSlug}?name=${encodeURIComponent(formData.nom_complet)}&notes=${encodeURIComponent(notesContext)}`;
+
+      // 4. Confirmation et ouverture
+      const confirm = window.confirm("✅ Demande bien reçue ! Voulez-vous bloquer votre créneau d'intervention immédiatement ?");
+      
+      if (confirm) {
+        window.open(finalUrl, "_blank"); // Ouvre l'agenda dans un nouvel onglet
+      }
+      
+      // Reset du formulaire dans tous les cas
       setFormData({ nom_complet: '', telephone: '', ville: '', message: '' });
       setSelectedPack("");
       
     } catch (error) {
-      console.error("Erreur PocketBase:", error);
-      alert("❌ Une erreur est survenue. Merci de nous contacter par téléphone.");
+      console.error("Erreur:", error);
+      alert("❌ Une erreur technique est survenue. Nous avons bien reçu votre demande mais la redirection vers l'agenda a échoué. Nous vous rappellerons.");
     } finally {
       setIsSubmitting(false);
     }
