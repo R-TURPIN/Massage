@@ -7,12 +7,12 @@ import {
   Mail, 
   Menu, 
   X, 
-  ShieldCheck,
-  Briefcase,
-  ArrowRight,
-  Calculator,
-  ChevronDown,
-  FileText,
+  ShieldCheck, 
+  Briefcase, 
+  ArrowRight, 
+  Calculator, 
+  ChevronDown, 
+  FileText, 
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -264,7 +264,7 @@ const App = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20 relative z-10">
-            {/* 20m2 */}
+            {/* 20m2 - CORRECTION ICI */}
             <PricingCard 
               title="Studio / T1"
               subtitle="Surface < 20m²"
@@ -294,7 +294,8 @@ const App = () => {
               <div className="mb-4">
                 <span className="bg-slate-100 text-slate-600 font-bold tracking-wider text-xs uppercase px-3 py-1 rounded-full">Sur Mesure</span>
                 <h3 className="text-2xl font-bold text-slate-900 mt-4">T4 / Maison</h3>
-                <p className="text-slate-500 text-sm mt-2">Surface &gt; 100m²</p>
+                {/* CORRECTION ICI */}
+                <p className="text-slate-500 text-sm mt-2">Surface {'>'} 100m²</p>
               </div>
               <div className="my-6">
                 <span className="text-3xl font-bold text-slate-900">Sur Devis</span>
@@ -515,9 +516,10 @@ const App = () => {
                   className="w-full pl-4 pr-10 py-3.5 bg-slate-50 rounded-xl border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition font-medium text-slate-800 appearance-none"
                 >
                   <option value="" disabled>Sélectionnez une prestation</option>
-                  <option value="Studio (120€)">Studio / T1 (&lt; 20m²) - 120€</option>
-                  <option value="T2 (150€)">Appartement T2 (&lt; 40m²) - 150€</option>
-                  <option value="T3 (190€)">Grand Appt / T3 (&lt; 70m²) - 190€</option>
+                  {/* CORRECTION ICI : Remplacement de < par {'<'} */}
+                  <option value="Studio (120€)">Studio / T1 ({'<'} 20m²) - 120€</option>
+                  <option value="T2 (150€)">Appartement T2 ({'<'} 40m²) - 150€</option>
+                  <option value="T3 (190€)">Grand Appt / T3 ({'<'} 70m²) - 190€</option>
                   <option value="Devis T4/Maison">Maison / Grande Surface - Sur devis</option>
                   <option value="Pack Investisseur (300€)">Pack Investisseur (3 x Studios) - 300€</option>
                 </select>
