@@ -181,4 +181,19 @@ export const generateEdlHtml = (data: any) => {
         </div>
         <div class="signature-box">
           <div class="signature-role">Le Mandataire</div>
-          <div class="
+          <div class="signature-legal">Pour le compte du propriétaire. Mention "Lu et approuvé".</div>
+          <div style="display: flex; justify-content: center; margin-top: 10px;">${signImgBail}</div>
+        </div>
+      </div>
+
+      <div class="legal-footer">
+        <strong>MENTIONS LÉGALES ET JURIDIQUES :</strong><br/>
+        Le présent état des lieux est établi contradictoirement entre les parties conformément à la <strong>Loi n° 89-462 du 6 juillet 1989</strong> tendant à améliorer les rapports locatifs et au <strong>Décret n° 2016-382 du 30 mars 2016</strong> fixant les modalités d'établissement de l'état des lieux et de prise en compte de la vétusté.<br/>
+        En cas de modification de l'état des lieux d'entrée, le locataire peut demander au bailleur ou à son représentant de le compléter dans un délai de dix jours à compter de son établissement. Pour les éléments de chauffage, ce délai est étendu au premier mois de la période de chauffe.<br/>
+        Document généré électroniquement via la plateforme EDL Lille Expert. L'original numérique est conservé sur serveur sécurisé.
+      </div>
+
+    </body>
+    </html>
+  `;
+};
