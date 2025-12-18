@@ -1,5 +1,5 @@
 export const generateEdlHtml = (data: any) => {
-  const { info, compteurs, pieces } = data;
+  const { info, compteurs, pieces, signatures } = data; // On récupère les signatures
 
   // On crée les lignes des compteurs
   const compteursHtml = compteurs.map((c: any) => `
@@ -57,6 +57,16 @@ export const generateEdlHtml = (data: any) => {
       </div>
     `;
   }).join('');
+
+  // Gestion de l'affichage des signatures
+  const signLocataire = signatures?.locataire 
+    ? `<img src="${signatures.locataire}" style="max-height: 60px; display: block; margin-top: 10px;" />` 
+    : '<div style="color: #ccc; font-style: italic; margin-top: 20px;">Non signé</div>';
+
+  const signBailleur = signatures?.bailleur 
+    ? `<img src="${signatures.bailleur}" style="max-height: 60px; display: block; margin-top: 10px;" />` 
+    : '<div style="color: #ccc; font-style: italic; margin-top: 20px;">Non signé</div>';
+
 
   // LE HTML COMPLET
   return `
@@ -119,12 +129,14 @@ export const generateEdlHtml = (data: any) => {
       </div>
 
       <div style="margin-top: 50px; border-top: 2px solid #ddd; padding-top: 20px; display: flex; justify-content: space-between;">
-        <div style="width: 45%; height: 100px; border: 1px dashed #ccc; padding: 10px;">
+        <div style="width: 45%; border: 1px dashed #ccc; padding: 10px; min-height: 100px;">
           <div class="label">Signature Locataire</div>
-          <div style="margin-top: 10px; font-size: 10px; color: #999;">(Mention "Lu et approuvé")</div>
+          <div style="font-size: 10px; color: #999;">(Mention "Lu et approuvé")</div>
+          ${signLocataire}
         </div>
-        <div style="width: 45%; height: 100px; border: 1px dashed #ccc; padding: 10px;">
+        <div style="width: 45%; border: 1px dashed #ccc; padding: 10px; min-height: 100px;">
           <div class="label">Signature Bailleur / Mandataire</div>
+          ${signBailleur}
         </div>
       </div>
 
