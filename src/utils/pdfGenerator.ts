@@ -2,7 +2,7 @@
 
 // REMPLACE ÇA par l'URL de ton Gotenberg sur Coolify (ex: https://gotenberg-xxx.sslip.io)
 // Si tu es en HTTP, mets http. Mais attention aux images plus tard.
-const GOTENBERG_URL = "http://p0socg8kgcs8w48o8sss8ogo.37.27.191.8.sslip.io"; 
+const GOTENBERG_URL = "https://p0socg8kgcs8w48o8sss8ogo.37.27.191.8.sslip.io"; 
 
 export const downloadPdf = async (htmlContent: string, filename: string = "document.pdf") => {
   try {
