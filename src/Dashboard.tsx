@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 import { generateEdlHtml } from './utils/edlTemplate';
 import { downloadPdf } from './utils/pdfGenerator';
-import { compressImage } from './utils/imageUtils'; // L'import magique
+import { compressImage } from './utils/imageUtils';
 import { 
   FileText, 
   Loader2, 
@@ -13,15 +14,16 @@ import {
   User, 
   Save,
   Camera,
-  XCircle
+  XCircle,
+  PenTool,
+  Eraser
 } from 'lucide-react';
 
-// Interfaces mises à jour avec les photos
 interface Element {
   nom: string;
   etat: string;
   com: string;
-  photos: string[]; // Nouveau champ : tableau de Base64
+  photos: string[];
 }
 
 interface Piece {
@@ -31,7 +33,11 @@ interface Piece {
 
 const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isCompressing, setIsCompressing] = useState(false); // Petit loader si la compression prend du temps
+  const [isCompressing, setIsCompressing] = useState(false);
+
+  // Refs pour les signatures
+  const sigLocataireRef = useRef<any>(null);
+  const sigBailleurRef = useRef<any>(null);
 
   const [data, setData] = useState({
     info: {
@@ -63,10 +69,8 @@ const Dashboard = () => {
       setIsCompressing(true);
       try {
         const file = e.target.files[0];
-        // Compression de l'image
         const compressedBase64 = await compressImage(file);
         
-        // Ajout au state
         const newPieces = [...data.pieces];
         newPieces[pieceIndex].elements[elIndex].photos.push(compressedBase64);
         setData({ ...data, pieces: newPieces });
@@ -75,7 +79,6 @@ const Dashboard = () => {
         alert("Impossible d'ajouter la photo.");
       } finally {
         setIsCompressing(false);
-        // Reset de l'input pour pouvoir remettre la même photo si besoin
         e.target.value = '';
       }
     }
@@ -89,12 +92,11 @@ const Dashboard = () => {
     }
   };
 
-  // --- GESTION DES INFOS GÉNÉRALES ---
+  // --- GESTION DES INFOS & COMPTEURS & PIÈCES ---
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setData({ ...data, info: { ...data.info, [e.target.name]: e.target.value } });
   };
 
-  // --- GESTION DES COMPTEURS ---
   const updateCompteur = (index: number, field: string, value: string) => {
     const newCompteurs = [...data.compteurs];
     newCompteurs[index] = { ...newCompteurs[index], [field]: value };
@@ -102,10 +104,7 @@ const Dashboard = () => {
   };
 
   const addCompteur = () => {
-    setData({
-      ...data,
-      compteurs: [...data.compteurs, { type: "Nouveau Compteur", num: "", valeur: "", loc: "" }]
-    });
+    setData({ ...data, compteurs: [...data.compteurs, { type: "Nouveau", num: "", valeur: "", loc: "" }] });
   };
 
   const removeCompteur = (index: number) => {
@@ -113,9 +112,8 @@ const Dashboard = () => {
     setData({ ...data, compteurs: newCompteurs });
   };
 
-  // --- GESTION DES PIÈCES ---
   const addPiece = () => {
-    const nomPiece = prompt("Nom de la nouvelle pièce (ex: Cuisine, Chambre 1...)");
+    const nomPiece = prompt("Nom de la nouvelle pièce (ex: Cuisine...)");
     if (nomPiece) {
       setData({
         ...data,
@@ -138,10 +136,9 @@ const Dashboard = () => {
     }
   };
 
-  // --- GESTION DES ÉLÉMENTS ---
   const updateElement = (pieceIndex: number, elIndex: number, field: keyof Element, value: string) => {
     const newPieces = [...data.pieces];
-    // @ts-ignore - TypeScript peut râler sur le type dynamique, on ignore ici
+    // @ts-ignore
     newPieces[pieceIndex].elements[elIndex][field] = value;
     setData({ ...data, pieces: newPieces });
   };
@@ -167,7 +164,20 @@ const Dashboard = () => {
 
     setIsGenerating(true);
     try {
-      const html = generateEdlHtml(data);
+      // Récupération des signatures en Base64
+      const signatures = {
+        locataire: sigLocataireRef.current && !sigLocataireRef.current.isEmpty() 
+          ? sigLocataireRef.current.toDataURL() 
+          : null,
+        bailleur: sigBailleurRef.current && !sigBailleurRef.current.isEmpty() 
+          ? sigBailleurRef.current.toDataURL() 
+          : null
+      };
+
+      // Fusion des données
+      const fullData = { ...data, signatures };
+
+      const html = generateEdlHtml(fullData);
       const filename = `EDL_${data.info.locataire.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       await downloadPdf(html, filename);
     } catch (e) {
@@ -176,6 +186,10 @@ const Dashboard = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const clearSignature = (ref: any) => {
+    ref.current.clear();
   };
 
   return (
@@ -214,7 +228,7 @@ const Dashboard = () => {
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type d'état des lieux</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
               <select name="type" value={data.info.type} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg">
                 <option>Entrée</option>
                 <option>Sortie</option>
@@ -226,21 +240,21 @@ const Dashboard = () => {
               <input type="text" name="date" value={data.info.date} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse du bien</label>
-              <input type="text" name="adresse" placeholder="123 Rue de Lille..." value={data.info.adresse} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse</label>
+              <input type="text" name="adresse" placeholder="Adresse complète..." value={data.info.adresse} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Locataire(s)</label>
-              <input type="text" name="locataire" placeholder="M. Dupont..." value={data.info.locataire} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold" />
+              <input type="text" name="locataire" placeholder="Nom du locataire..." value={data.info.locataire} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Bailleur / Agence</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Bailleur / Mandataire</label>
               <input type="text" name="bailleur" value={data.info.bailleur} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
             </div>
           </div>
         </section>
 
-        {/* 2. COMPTEURS (Pas de changement ici, simplifié pour l'exemple) */}
+        {/* 2. COMPTEURS */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-slate-700">
@@ -263,7 +277,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* 3. PIÈCES ET PHOTOS */}
+        {/* 3. PIÈCES */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -278,22 +292,12 @@ const Dashboard = () => {
           {data.pieces.map((piece, pIdx) => (
             <div key={pIdx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <input 
-                  type="text" 
-                  value={piece.nom} 
-                  onChange={(e) => {
-                    const newPieces = [...data.pieces];
-                    newPieces[pIdx].nom = e.target.value;
-                    setData({...data, pieces: newPieces});
-                  }}
-                  className="font-bold text-lg bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-slate-800"
-                />
+                <input type="text" value={piece.nom} onChange={(e) => { const newPieces = [...data.pieces]; newPieces[pIdx].nom = e.target.value; setData({...data, pieces: newPieces}); }} className="font-bold text-lg bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-slate-800" />
                 <div className="flex gap-2">
                    <button onClick={() => addElement(pIdx)} className="text-xs bg-white border border-slate-300 hover:bg-blue-50 text-slate-600 px-3 py-1.5 rounded-md flex items-center gap-1 transition"><Plus size={14}/> Élément</button>
                    <button onClick={() => removePiece(pIdx)} className="text-slate-400 hover:text-red-600 p-1.5 transition"><Trash2 size={18}/></button>
                 </div>
               </div>
-
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
@@ -307,70 +311,25 @@ const Dashboard = () => {
                   <tbody className="divide-y divide-slate-100">
                     {piece.elements.map((el, eIdx) => (
                       <tr key={eIdx} className="hover:bg-slate-50 transition">
+                        <td className="px-6 py-3 align-top"><input type="text" value={el.nom} onChange={(e) => updateElement(pIdx, eIdx, 'nom', e.target.value)} className="w-full bg-transparent font-medium text-slate-900 border-b border-transparent focus:border-blue-400 outline-none" /></td>
                         <td className="px-6 py-3 align-top">
-                          <input 
-                            type="text" 
-                            value={el.nom} 
-                            onChange={(e) => updateElement(pIdx, eIdx, 'nom', e.target.value)} 
-                            className="w-full bg-transparent font-medium text-slate-900 border-b border-transparent focus:border-blue-400 outline-none"
-                          />
-                        </td>
-                        <td className="px-6 py-3 align-top">
-                          <select 
-                            value={el.etat} 
-                            onChange={(e) => updateElement(pIdx, eIdx, 'etat', e.target.value)} 
-                            className={`w-full p-1.5 rounded border ${
-                              el.etat === 'Neuf' ? 'bg-green-50 border-green-200 text-green-700' :
-                              el.etat === 'Bon état' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                              el.etat === 'État d\'usage' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
-                              'bg-red-50 border-red-200 text-red-700'
-                            }`}
-                          >
-                            <option>Neuf</option>
-                            <option>Bon état</option>
-                            <option>État d'usage</option>
-                            <option>Mauvais état</option>
-                            <option>Non fonctionnel</option>
+                          <select value={el.etat} onChange={(e) => updateElement(pIdx, eIdx, 'etat', e.target.value)} className={`w-full p-1.5 rounded border ${el.etat === 'Neuf' ? 'bg-green-50 border-green-200 text-green-700' : el.etat === 'Bon état' ? 'bg-blue-50 border-blue-200 text-blue-700' : el.etat === 'État d\'usage' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                            <option>Neuf</option><option>Bon état</option><option>État d'usage</option><option>Mauvais état</option><option>Non fonctionnel</option>
                           </select>
                         </td>
                         <td className="px-6 py-3">
-                          <input 
-                            type="text" 
-                            placeholder="Commentaire..." 
-                            value={el.com} 
-                            onChange={(e) => updateElement(pIdx, eIdx, 'com', e.target.value)} 
-                            className="w-full bg-transparent text-slate-600 border-b border-slate-200 focus:border-blue-400 outline-none mb-3"
-                          />
-                          
-                          {/* ZONE PHOTOS */}
+                          <input type="text" placeholder="Commentaire..." value={el.com} onChange={(e) => updateElement(pIdx, eIdx, 'com', e.target.value)} className="w-full bg-transparent text-slate-600 border-b border-slate-200 focus:border-blue-400 outline-none mb-3" />
                           <div className="flex flex-wrap gap-2 items-center">
                             {el.photos.map((photo, photoIdx) => (
                               <div key={photoIdx} className="relative group w-12 h-12">
                                 <img src={photo} alt="miniature" className="w-full h-full object-cover rounded border border-slate-300" />
-                                <button 
-                                  onClick={() => removePhoto(pIdx, eIdx, photoIdx)}
-                                  className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition"
-                                >
-                                  <XCircle size={16} fill="white" />
-                                </button>
+                                <button onClick={() => removePhoto(pIdx, eIdx, photoIdx)} className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition"><XCircle size={16} fill="white" /></button>
                               </div>
                             ))}
-                            
-                            <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-500 rounded border border-slate-300 w-12 h-12 flex items-center justify-center transition">
-                              <Camera size={20} />
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="hidden" 
-                                onChange={(e) => handlePhotoUpload(e, pIdx, eIdx)}
-                              />
-                            </label>
+                            <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-500 rounded border border-slate-300 w-12 h-12 flex items-center justify-center transition"><Camera size={20} /><input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, pIdx, eIdx)} /></label>
                           </div>
-
                         </td>
-                        <td className="px-2 py-3 text-right align-top">
-                          <button onClick={() => removeElement(pIdx, eIdx)} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
-                        </td>
+                        <td className="px-2 py-3 text-right align-top"><button onClick={() => removeElement(pIdx, eIdx)} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -380,7 +339,53 @@ const Dashboard = () => {
           ))}
         </section>
 
-        <div className="flex justify-end pt-8">
+        {/* 4. SIGNATURES (NOUVEAU) */}
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2 font-bold text-slate-700">
+            <PenTool size={20}/> Signatures
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* Signature Locataire */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-bold text-slate-600">Locataire (Lu et approuvé)</label>
+                <button onClick={() => clearSignature(sigLocataireRef)} className="text-xs text-red-500 flex items-center gap-1 hover:underline">
+                  <Eraser size={12}/> Effacer
+                </button>
+              </div>
+              <div className="border border-slate-300 rounded-lg bg-slate-50 touch-none">
+                <SignatureCanvas 
+                  ref={sigLocataireRef}
+                  penColor="black"
+                  canvasProps={{className: 'w-full h-40 rounded-lg'}}
+                  backgroundColor="rgba(248, 250, 252, 1)"
+                />
+              </div>
+            </div>
+
+            {/* Signature Bailleur */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-bold text-slate-600">Bailleur / Mandataire</label>
+                <button onClick={() => clearSignature(sigBailleurRef)} className="text-xs text-red-500 flex items-center gap-1 hover:underline">
+                  <Eraser size={12}/> Effacer
+                </button>
+              </div>
+              <div className="border border-slate-300 rounded-lg bg-slate-50 touch-none">
+                 <SignatureCanvas 
+                  ref={sigBailleurRef}
+                  penColor="black"
+                  canvasProps={{className: 'w-full h-40 rounded-lg'}}
+                  backgroundColor="rgba(248, 250, 252, 1)"
+                />
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <div className="flex justify-end pt-8 pb-12">
            <button
             onClick={handleGenerate}
             disabled={isGenerating || isCompressing}
