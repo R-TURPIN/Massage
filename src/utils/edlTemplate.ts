@@ -1,145 +1,111 @@
-// src/utils/edlTemplate.ts
+export const generateEdlHtml = (data: any) => {
+  const { info, compteurs, pieces } = data;
 
-// On définit les types pour que TypeScript ne gueule pas
-interface EdlData {
-  info: {
-    type: string;
-    date: string;
-    adresse: string;
-    bailleur: string;
-    locataire: string;
-  };
-  compteurs: Array<{ type: string; num: string; valeur: string; loc: string }>;
-  pieces: Array<{
-    nom: string;
-    elements: Array<{ nom: string; etat: string; com: string }>;
-  }>;
-}
-
-export const generateEdlHtml = (data: EdlData) => {
-  // On construit les lignes des compteurs
-  const compteursHtml = data.compteurs.map(c => `
+  // On crée les lignes des compteurs
+  const compteursHtml = compteurs.map((c: any) => `
     <tr>
-      <td><strong>${c.type}</strong></td>
-      <td>${c.num}</td>
-      <td>${c.loc}</td>
-      <td class="highlight">${c.valeur}</td>
+      <td style="padding: 8px; border: 1px solid #ddd;"><strong>${c.type}</strong></td>
+      <td style="padding: 8px; border: 1px solid #ddd;">${c.num || '-'}</td>
+      <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace; font-weight: bold;">${c.valeur || '-'}</td>
+      <td style="padding: 8px; border: 1px solid #ddd;">${c.loc || '-'}</td>
     </tr>
   `).join('');
 
-  // On construit les blocs pour chaque pièce (La boucle magique)
-  const piecesHtml = data.pieces.map(piece => {
-    const elementsRows = piece.elements.map(el => `
+  // On crée les blocs pour chaque pièce
+  const piecesHtml = pieces.map((p: any) => {
+    const elementsHtml = p.elements.map((el: any) => {
+      // Gestion des photos pour cet élément
+      const photosHtml = el.photos && el.photos.length > 0 
+        ? `<div style="margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap;">
+            ${el.photos.map((photo: string) => 
+              `<img src="${photo}" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px;" />`
+            ).join('')}
+           </div>`
+        : '';
+
+      return `
       <tr>
-        <td style="width: 25%"><strong>${el.nom}</strong></td>
-        <td style="width: 15%">${el.etat}</td>
-        <td style="width: 60%">${el.com}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${el.nom}</td>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: ${
+          el.etat === 'Neuf' ? '#dcfce7' :
+          el.etat === 'Bon état' ? '#dbeafe' :
+          el.etat === 'État d\'usage' ? '#fef9c3' : '#fee2e2'
+        }">${el.etat}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">
+          ${el.com || ''}
+          ${photosHtml}
+        </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
 
     return `
-      <div class="room-section">
-        <h3 class="room-title">${piece.nom}</h3>
-        <table class="data-table">
+      <div style="margin-bottom: 20px; page-break-inside: avoid;">
+        <h3 style="background-color: #f1f5f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 5px solid #2563eb;">${p.nom}</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
           <thead>
-            <tr>
-              <th>Élément</th>
-              <th>État</th>
-              <th>Observations</th>
+            <tr style="background-color: #f8fafc;">
+              <th style="width: 25%; text-align: left; padding: 8px; border: 1px solid #ddd;">Élément</th>
+              <th style="width: 25%; text-align: left; padding: 8px; border: 1px solid #ddd;">État</th>
+              <th style="width: 50%; text-align: left; padding: 8px; border: 1px solid #ddd;">Commentaires & Photos</th>
             </tr>
           </thead>
           <tbody>
-            ${elementsRows}
+            ${elementsHtml}
           </tbody>
         </table>
       </div>
     `;
   }).join('');
 
-  // Le Template HTML Complet
+  // LE HTML COMPLET
   return `
     <!DOCTYPE html>
-    <html lang="fr">
+    <html>
     <head>
-      <meta charset="UTF-8">
-      <title>État des Lieux</title>
+      <meta charset="utf-8">
       <style>
-        /* RESET & BASE - Optimisé pour A4 */
-        @page { margin: 0; size: A4; }
-        body { 
-          font-family: 'Helvetica', 'Arial', sans-serif; 
-          margin: 0; 
-          padding: 40px; 
-          color: #333; 
-          font-size: 12px;
-          line-height: 1.4;
-        }
-        
-        /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #2563eb; padding-bottom: 20px; }
-        .logo { font-size: 24px; font-weight: bold; color: #1e293b; }
-        .logo span { color: #2563eb; }
-        .doc-title { text-align: right; }
-        .doc-title h1 { margin: 0; font-size: 20px; text-transform: uppercase; color: #2563eb; }
-        .doc-title p { margin: 5px 0 0; font-size: 14px; color: #64748b; }
-
-        /* INFO BOXES */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; }
-        .box h4 { margin: 0 0 10px 0; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .box p { margin: 0; font-weight: bold; font-size: 14px; }
-
-        /* TABLES */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        th { text-align: left; background: #f1f5f9; padding: 8px; font-size: 10px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-        .highlight { font-weight: bold; color: #2563eb; }
-
-        /* ROOM SECTIONS */
-        .room-section { margin-bottom: 25px; break-inside: avoid; } /* break-inside: avoid empêche de couper un tableau en deux pages */
-        .room-title { background: #1e293b; color: white; padding: 8px 15px; margin: 0 0 0 0; border-radius: 4px 4px 0 0; font-size: 14px; }
-        .data-table { border: 1px solid #e2e8f0; border-top: none; }
-
-        /* SIGNATURES */
-        .signatures { margin-top: 50px; display: flex; justify-content: space-between; page-break-inside: avoid; }
-        .sig-box { width: 45%; height: 100px; border: 1px dashed #cbd5e1; background: #f8fafc; padding: 10px; position: relative; }
-        .sig-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: bold; }
-        
-        /* FOOTER */
-        .footer { position: fixed; bottom: 20px; left: 40px; right: 40px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; padding: 20px; }
+        h1 { color: #2563eb; text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .info-box { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+        .value { font-size: 14px; font-weight: bold; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; }
       </style>
     </head>
     <body>
-
-      <div class="header">
-        <div class="logo">EDL Lille<span>.Expert</span></div>
-        <div class="doc-title">
-          <h1>État des lieux - ${data.info.type}</h1>
-          <p>Date : ${data.info.date}</p>
-        </div>
-      </div>
-
+      <h1>ÉTAT DES LIEUX - ${info.type.toUpperCase()}</h1>
+      
       <div class="info-grid">
-        <div class="box">
-          <h4>Bien concerné</h4>
-          <p>${data.info.adresse}</p>
+        <div class="info-box">
+          <div class="label">Adresse</div>
+          <div class="value">${info.adresse}</div>
         </div>
-        <div class="box">
-          <h4>Parties</h4>
-          <p><strong>Bailleur :</strong> ${data.info.bailleur}</p>
-          <p><strong>Locataire :</strong> ${data.info.locataire}</p>
+        <div class="info-box">
+          <div class="label">Date</div>
+          <div class="value">${info.date}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Locataire(s)</div>
+          <div class="value">${info.locataire}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Bailleur / Mandataire</div>
+          <div class="value">${info.bailleur}</div>
         </div>
       </div>
 
-      <div class="room-section">
-        <h3 class="room-title" style="background: #2563eb;">Relevé des Compteurs</h3>
-        <table class="data-table">
+      <div class="section">
+        <h3>⚡ Relevé des Compteurs</h3>
+        <table style="font-size: 12px;">
           <thead>
-            <tr>
-              <th>Type</th>
-              <th>Numéro</th>
-              <th>Emplacement</th>
-              <th>Index / Valeur</th>
+            <tr style="background-color: #f1f5f9;">
+              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Type</th>
+              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">N° Série</th>
+              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Index</th>
+              <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Emplacement</th>
             </tr>
           </thead>
           <tbody>
@@ -148,23 +114,23 @@ export const generateEdlHtml = (data: EdlData) => {
         </table>
       </div>
 
-      ${piecesHtml}
+      <div class="section">
+        ${piecesHtml}
+      </div>
 
-      <div class="signatures">
-        <div class="sig-box">
-          <div class="sig-label">Le Bailleur (ou mandataire)</div>
-          <div style="font-size: 9px; margin-top: 5px; color: #94a3b8;">"Lu et approuvé"</div>
+      <div style="margin-top: 50px; border-top: 2px solid #ddd; padding-top: 20px; display: flex; justify-content: space-between;">
+        <div style="width: 45%; height: 100px; border: 1px dashed #ccc; padding: 10px;">
+          <div class="label">Signature Locataire</div>
+          <div style="margin-top: 10px; font-size: 10px; color: #999;">(Mention "Lu et approuvé")</div>
         </div>
-        <div class="sig-box">
-          <div class="sig-label">Le Locataire</div>
-          <div style="font-size: 9px; margin-top: 5px; color: #94a3b8;">"Lu et approuvé"</div>
+        <div style="width: 45%; height: 100px; border: 1px dashed #ccc; padding: 10px;">
+          <div class="label">Signature Bailleur / Mandataire</div>
         </div>
       </div>
 
-      <div class="footer">
-        Document généré par EDL Lille Expert - Certifié conforme Loi ALUR - Page 1/X
+      <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #94a3b8;">
+        Document généré via EDL Lille Expert - ${new Date().toLocaleDateString()}
       </div>
-
     </body>
     </html>
   `;
