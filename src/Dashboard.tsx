@@ -17,8 +17,8 @@ import {
   XCircle,
   PenTool,
   Eraser,
-  MapPin,
-  Search
+  MapPin, // Icône pour l'adresse
+  Search  // Icône pour la recherche
 } from 'lucide-react';
 
 interface Element {
@@ -33,7 +33,7 @@ interface Piece {
   elements: Element[];
 }
 
-// Interface pour les résultats API Adresse
+// Pour typer les résultats de l'API adresse
 interface AddressResult {
   properties: {
     label: string;
@@ -45,7 +45,7 @@ const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
 
-  // États pour l'autocomplétion d'adresse
+  // --- NOUVEAU : États pour l'autocomplétion ---
   const [addressSuggestions, setAddressSuggestions] = useState<AddressResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -77,13 +77,13 @@ const Dashboard = () => {
     ] as Piece[]
   });
 
-  // --- LOGIQUE AUTOCOMPLÉTION ADRESSE ---
+  // --- LOGIQUE AUTOCOMPLÉTION ---
   const handleAddressInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // On met à jour le champ normalement
     setData({ ...data, info: { ...data.info, adresse: value } });
 
-    // Si plus de 3 caractères, on cherche
+    // Si plus de 3 caractères, on interroge l'API du gouvernement
     if (value.length > 3) {
       try {
         const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(value)}&limit=5`);
@@ -100,17 +100,16 @@ const Dashboard = () => {
 
   const selectAddress = (address: string) => {
     setData({ ...data, info: { ...data.info, adresse: address } });
-    setShowSuggestions(false);
+    setShowSuggestions(false); // On cache la liste après le choix
   };
 
-  // --- LOGIQUE MÉTIER ---
+  // --- LOGIQUE EXISTANTE (Photos, Compteurs, etc.) ---
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, pieceIndex: number, elIndex: number) => {
     if (e.target.files && e.target.files[0]) {
       setIsCompressing(true);
       try {
         const file = e.target.files[0];
         const compressedBase64 = await compressImage(file);
-        
         const newPieces = [...data.pieces];
         newPieces[pieceIndex].elements[elIndex].photos.push(compressedBase64);
         setData({ ...data, pieces: newPieces });
@@ -216,6 +215,7 @@ const Dashboard = () => {
     }
   };
 
+  // Petit trick pour fermer la liste si on clique ailleurs
   return (
     <div className="min-h-screen bg-slate-100 pb-20 font-sans" onClick={() => setShowSuggestions(false)}>
       
@@ -238,26 +238,15 @@ const Dashboard = () => {
 
       <div className="max-w-5xl mx-auto px-4 mt-8 space-y-8">
         
-        {/* INFOS */}
+        {/* INFOS GÉNÉRALES AVEC AUTOCOMPLÉTION */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2 font-bold text-slate-700"><User size={20}/> Informations Générales</div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
-              <select name="type" value={data.info.type} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <option>Entrée</option>
-                <option>Sortie</option>
-                <option>Pré-état des lieux</option>
-              </select>
-            </div>
+            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label><select name="type" value={data.info.type} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"><option>Entrée</option><option>Sortie</option><option>Pré-état des lieux</option></select></div>
+            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label><input type="text" name="date" value={data.info.date} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" /></div>
             
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
-              <input type="text" name="date" value={data.info.date} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
-            </div>
-            
-            {/* CHAMP ADRESSE AVEC AUTOCOMPLÉTION */}
+            {/* --- LE CHAMP ADRESSE MODIFIÉ --- */}
             <div className="md:col-span-2 relative z-20">
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
                 Adresse du bien <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"><Search size={10}/> Auto-complétion active</span>
@@ -266,7 +255,7 @@ const Dashboard = () => {
                 <input 
                   type="text" 
                   name="adresse" 
-                  placeholder="Commencez à taper une adresse..." 
+                  placeholder="Tapez les premières lettres..." 
                   value={data.info.adresse} 
                   onChange={handleAddressInput} 
                   autoComplete="off"
@@ -274,7 +263,7 @@ const Dashboard = () => {
                 />
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 
-                {/* LISTE DES SUGGESTIONS */}
+                {/* LISTE DÉROULANTE */}
                 {showSuggestions && addressSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto">
                     {addressSuggestions.map((suggestion, idx) => (
@@ -285,8 +274,7 @@ const Dashboard = () => {
                       >
                         <MapPin size={14} className="shrink-0 opacity-50"/>
                         <div>
-                           <span className="font-bold">{suggestion.properties.label.split(' ').slice(0, 2).join(' ')}</span>
-                           {suggestion.properties.label.split(' ').slice(2).join(' ')}
+                           <span className="font-bold">{suggestion.properties.label}</span>
                            <div className="text-xs text-slate-400 font-normal">{suggestion.properties.context}</div>
                         </div>
                       </button>
@@ -295,6 +283,7 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+            {/* ---------------------------------- */}
 
             <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Locataire(s)</label><input type="text" name="locataire" placeholder="Nom..." value={data.info.locataire} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold" /></div>
             <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Bailleur / Mandataire</label><input type="text" name="bailleur" value={data.info.bailleur} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" /></div>
