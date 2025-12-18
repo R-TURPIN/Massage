@@ -1,56 +1,56 @@
 export const generateEdlHtml = (data: any) => {
   const { info, compteurs, pieces, signatures } = data;
 
-  // Vert du modèle (environ)
-  const PRIMARY_COLOR = "#059669"; // Un vert émeraude pro
-  const BG_HEADER = "#ecfdf5"; // Fond vert très clair pour les en-têtes
+  // COULEURS DE LA MARQUE (Bleu Roi / Slate)
+  const BRAND_COLOR = "#0f172a"; // Slate-900 (Foncé pro)
+  const ACCENT_COLOR = "#2563eb"; // Blue-600 (Le bleu de ton site)
+  const BG_LIGHT = "#f8fafc"; // Slate-50
 
-  // Fonction pour les badges d'état (couleurs douces)
+  // Badges d'état (Style plus "Corporate")
   const getEtatBadge = (etat: string) => {
-    let color = "#374151";
-    let bg = "#f3f4f6";
+    let style = "background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;";
     
     switch (etat) {
-      case 'Neuf': color = "#065f46"; bg = "#d1fae5"; break; // Vert
-      case 'Bon état': color = "#1e40af"; bg = "#dbeafe"; break; // Bleu
-      case 'État d\'usage': color = "#92400e"; bg = "#fef3c7"; break; // Jaune
-      case 'Mauvais état': color = "#991b1b"; bg = "#fee2e2"; break; // Rouge
-      case 'Non fonctionnel': color = "#fff"; bg = "#ef4444"; break; // Rouge vif
+      case 'Neuf': style = "background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;"; break;
+      case 'Bon état': style = "background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;"; break;
+      case 'État d\'usage': style = "background: #fffbeb; color: #92400e; border: 1px solid #fde68a;"; break;
+      case 'Mauvais état': style = "background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;"; break;
+      case 'Non fonctionnel': style = "background: #000; color: #fff; border: 1px solid #000;"; break;
     }
-    return `<span style="background: ${bg}; color: ${color}; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; text-transform: uppercase;">${etat}</span>`;
+    return `<span style="${style} padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">${etat}</span>`;
   };
 
-  // Lignes Compteurs
   const compteursHtml = compteurs.map((c: any) => `
     <tr>
-      <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">${c.type}</td>
-      <td style="padding: 10px; border: 1px solid #e5e7eb;">${c.num || ''}</td>
-      <td style="padding: 10px; border: 1px solid #e5e7eb; font-family: monospace; font-weight: bold; color: ${PRIMARY_COLOR};">${c.valeur || ''}</td>
-      <td style="padding: 10px; border: 1px solid #e5e7eb;">${c.loc || ''}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: ${BRAND_COLOR}; font-weight: 600;">${c.type}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${c.num || '—'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: ${ACCENT_COLOR}; font-size: 13px;">${c.valeur || '—'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${c.loc || '—'}</td>
     </tr>
   `).join('');
 
-  // Blocs Pièces
   const piecesHtml = pieces.map((p: any) => {
     const elementsHtml = p.elements.map((el: any) => {
       const photosHtml = el.photos && el.photos.length > 0 
-        ? `<div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">
+        ? `<div style="margin-top: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
             ${el.photos.map((photo: string) => 
-              `<img src="${photo}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" />`
+              `<div style="width: 50px; height: 50px; border: 1px solid #e2e8f0; padding: 2px; background: white;">
+                  <img src="${photo}" style="width: 100%; height: 100%; object-fit: cover;" />
+               </div>`
             ).join('')}
            </div>`
         : '';
 
       return `
       <tr style="page-break-inside: avoid;">
-        <td style="padding: 12px; border: 1px solid #e5e7eb; width: 30%; vertical-align: top;">
-          <strong>${el.nom}</strong>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; width: 30%; vertical-align: top;">
+          <strong style="color: ${BRAND_COLOR}; font-size: 12px;">${el.nom}</strong>
         </td>
-        <td style="padding: 12px; border: 1px solid #e5e7eb; width: 20%; vertical-align: top; text-align: center;">
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; width: 20%; vertical-align: top;">
           ${getEtatBadge(el.etat)}
         </td>
-        <td style="padding: 12px; border: 1px solid #e5e7eb; width: 50%; vertical-align: top; color: #4b5563;">
-          ${el.com || ''}
+        <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; width: 50%; vertical-align: top; color: #4b5563; font-size: 11px; line-height: 1.4;">
+          ${el.com ? `<div>${el.com}</div>` : ''}
           ${photosHtml}
         </td>
       </tr>
@@ -58,16 +58,17 @@ export const generateEdlHtml = (data: any) => {
     }).join('');
 
     return `
-      <div style="margin-bottom: 25px; page-break-inside: avoid;">
-        <div style="background: ${PRIMARY_COLOR}; color: white; padding: 8px 15px; border-radius: 6px 6px 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
-          ${p.nom}
+      <div style="margin-bottom: 30px; page-break-inside: avoid;">
+        <div style="border-bottom: 2px solid ${BRAND_COLOR}; margin-bottom: 10px; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <h3 style="margin: 0; color: ${BRAND_COLOR}; font-size: 14px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">${p.nom}</h3>
+          <span style="font-size: 9px; color: #94a3b8; text-transform: uppercase;">Inventaire détaillé</span>
         </div>
-        <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-top: none;">
-          <thead>
-            <tr style="background: ${BG_HEADER};">
-              <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: ${PRIMARY_COLOR}; border: 1px solid #e5e7eb;">Élément</th>
-              <th style="padding: 8px; text-align: center; font-size: 11px; text-transform: uppercase; color: ${PRIMARY_COLOR}; border: 1px solid #e5e7eb;">État</th>
-              <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: ${PRIMARY_COLOR}; border: 1px solid #e5e7eb;">Observations / Photos</th>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead style="background: ${BG_LIGHT};">
+            <tr>
+              <th style="text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">Élément</th>
+              <th style="text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">État Constaté</th>
+              <th style="text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">Observations & Photos</th>
             </tr>
           </thead>
           <tbody>
@@ -79,8 +80,8 @@ export const generateEdlHtml = (data: any) => {
   }).join('');
 
   // Signatures
-  const signImgLoc = signatures?.locataire ? `<img src="${signatures.locataire}" style="height: 50px;" />` : '';
-  const signImgBail = signatures?.bailleur ? `<img src="${signatures.bailleur}" style="height: 50px;" />` : '';
+  const signImgLoc = signatures?.locataire ? `<img src="${signatures.locataire}" style="height: 45px;" />` : '';
+  const signImgBail = signatures?.bailleur ? `<img src="${signatures.bailleur}" style="height: 45px;" />` : '';
 
   return `
     <!DOCTYPE html>
@@ -88,106 +89,96 @@ export const generateEdlHtml = (data: any) => {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; padding: 40px; font-size: 12px; line-height: 1.5; }
-        h1 { text-align: center; color: ${PRIMARY_COLOR}; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid ${PRIMARY_COLOR}; display: inline-block; padding-bottom: 5px; }
-        .header-checkbox { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; margin-right: 5px; }
-        .checked { background: #000; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #334155; padding: 40px 50px; font-size: 12px; line-height: 1.5; }
         
-        /* BOXES INFOS */
-        .box { border: 1px solid ${PRIMARY_COLOR}; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
-        .box-title { background: ${BG_HEADER}; color: ${PRIMARY_COLOR}; font-weight: bold; padding: 8px 15px; border-bottom: 1px solid ${PRIMARY_COLOR}; text-transform: uppercase; font-size: 11px; }
-        .box-content { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fff; }
+        /* HEADER PREMIUM */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; }
+        .brand-logo { font-size: 20px; font-weight: 900; color: ${BRAND_COLOR}; text-transform: uppercase; letter-spacing: -0.5px; }
+        .brand-accent { color: ${ACCENT_COLOR}; }
+        .doc-meta { text-align: right; }
+        .doc-type-badge { background: ${BRAND_COLOR}; color: white; padding: 5px 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; border-radius: 2px; }
         
-        .field-label { font-size: 10px; color: #6b7280; text-transform: uppercase; margin-bottom: 2px; }
-        .field-value { font-weight: bold; font-size: 13px; }
+        /* GRID INFO */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; background: ${BG_LIGHT}; padding: 20px; border: 1px solid #e2e8f0; border-radius: 4px; }
+        .info-col h4 { margin: 0 0 15px 0; font-size: 10px; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; letter-spacing: 1px; }
+        .field { margin-bottom: 10px; }
+        .label { font-size: 9px; text-transform: uppercase; color: #64748b; margin-bottom: 2px; font-weight: 600; }
+        .value { font-size: 13px; font-weight: 600; color: ${BRAND_COLOR}; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        /* LEGAL FOOTER */
+        .legal-footer { margin-top: 60px; font-size: 8px; color: #94a3b8; text-align: justify; border-top: 1px solid #e2e8f0; padding-top: 15px; line-height: 1.3; }
         
-        .footer { margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; }
-        .legend { font-size: 10px; color: #6b7280; margin-top: 5px; font-style: italic; }
+        .section-title { font-size: 12px; font-weight: 800; text-transform: uppercase; color: ${BRAND_COLOR}; background: #e2e8f0; padding: 8px 12px; margin-bottom: 0; border-left: 3px solid ${ACCENT_COLOR}; }
+        .compteurs-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; margin-bottom: 40px; }
+        .compteurs-header { background: #fff; text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+
+        .signature-section { margin-top: 40px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+        .signature-box { width: 48%; border: 1px solid #cbd5e1; height: 100px; padding: 10px; position: relative; background: #fff; }
+        .signature-role { font-weight: 800; font-size: 11px; color: ${BRAND_COLOR}; text-transform: uppercase; }
+        .signature-legal { font-size: 8px; color: #64748b; margin-top: 2px; font-style: italic; }
       </style>
     </head>
     <body>
 
-      <div style="text-align: center;">
-        <h1>ÉTAT DES LIEUX</h1>
-        <div style="margin-bottom: 30px; font-weight: bold;">
-          <span class="header-checkbox ${info.type === 'Entrée' ? 'checked' : ''}"></span> ENTRÉE &nbsp;&nbsp;&nbsp;
-          <span class="header-checkbox ${info.type === 'Sortie' ? 'checked' : ''}"></span> SORTIE
+      <div class="header">
+        <div>
+          <div class="brand-logo">EDL Lille<span class="brand-accent">.Expert</span></div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Rapport d'expertise locative</div>
+        </div>
+        <div class="doc-meta">
+          <div class="doc-type-badge">État des lieux ${info.type.toUpperCase()}</div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 5px; font-weight: 500;">Fait à Lille, le ${info.date}</div>
         </div>
       </div>
 
-      <div class="box">
-        <div class="box-title">Informations Générales</div>
-        <div class="box-content">
-          <div>
-            <div class="field-label">Adresse du logement</div>
-            <div class="field-value">${info.adresse}</div>
+      <div class="info-grid">
+        <div class="info-col">
+          <h4>Le Bien Objet du Constat</h4>
+          <div class="field">
+            <div class="label">Adresse Complète</div>
+            <div class="value">${info.adresse}</div>
           </div>
-          <div>
-            <div class="field-label">Date de l'état des lieux</div>
-            <div class="field-value">${info.date}</div>
+          <div class="field">
+            <div class="label">Mandataire / Propriétaire</div>
+            <div class="value">${info.bailleur}</div>
           </div>
-          <div>
-            <div class="field-label">Bailleur / Mandataire</div>
-            <div class="field-value">${info.bailleur}</div>
+        </div>
+        <div class="info-col">
+          <h4>La Partie Locataire</h4>
+          <div class="field">
+            <div class="label">Nom(s) et Prénom(s)</div>
+            <div class="value">${info.locataire}</div>
           </div>
-           <div>
-            <div class="field-label">Locataire(s)</div>
-            <div class="field-value">${info.locataire}</div>
+          <div class="field">
+            <div class="label">Dossier N°</div>
+            <div class="value">${Math.floor(Math.random() * 10000) + 2024} - REF</div>
           </div>
         </div>
       </div>
 
-      <div class="box">
-        <div class="box-title">Relevé des Compteurs</div>
-        <div style="padding: 0;">
-          <table style="border: none;">
-            <thead style="background: #f9fafb;">
-              <tr>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Type</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">N° Série</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Index</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Localisation</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${compteursHtml}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div style="margin-top: 30px;">
-        ${piecesHtml}
-      </div>
-      
-      <div class="legend">
-        Abréviations : TB = Très Bon état, B = Bon état, C = État moyen, M = Mauvais état, HS = Hors Service.
-      </div>
-
-      <div style="margin-top: 40px; border: 1px solid ${PRIMARY_COLOR}; border-radius: 8px; padding: 20px; page-break-inside: avoid;">
-        <table style="border: none;">
+      <div class="section-title">Relevé des Index</div>
+      <table class="compteurs-table">
+        <thead>
           <tr>
-            <td style="width: 50%; vertical-align: top; padding-right: 20px; border-right: 1px dashed #ccc;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Le Locataire</div>
-              <div style="font-size: 10px; color: #666; margin-bottom: 15px;">"Lu et approuvé"</div>
-              <div style="height: 60px; display: flex; align-items: center;">${signImgLoc}</div>
-            </td>
-            <td style="width: 50%; vertical-align: top; padding-left: 20px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Le Bailleur / Mandataire</div>
-              <div style="font-size: 10px; color: #666; margin-bottom: 15px;">"Lu et approuvé"</div>
-              <div style="height: 60px; display: flex; align-items: center;">${signImgBail}</div>
-            </td>
+            <th class="compteurs-header">Énergie / Fluide</th>
+            <th class="compteurs-header">N° Compteur</th>
+            <th class="compteurs-header">Index Relevé</th>
+            <th class="compteurs-header">Emplacement</th>
           </tr>
-        </table>
-      </div>
+        </thead>
+        <tbody>
+          ${compteursHtml}
+        </tbody>
+      </table>
 
-      <div class="footer">
-        Document généré via EDL Expert - Conformément à la loi ALUR n°2014-366 du 24 mars 2014.
-      </div>
+      ${piecesHtml}
 
-    </body>
-    </html>
-  `;
-};
+      <div class="signature-section">
+        <div class="signature-box">
+          <div class="signature-role">Le Locataire</div>
+          <div class="signature-legal">Reconnait l'exactitude des constatations ci-dessus. Mention "Lu et approuvé".</div>
+          <div style="display: flex; justify-content: center; margin-top: 10px;">${signImgLoc}</div>
+        </div>
+        <div class="signature-box">
+          <div class="signature-role">Le Mandataire</div>
+          <div class="
