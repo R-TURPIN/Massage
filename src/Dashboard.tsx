@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { generateEdlHtml } from './utils/edlTemplate';
 import { downloadPdf } from './utils/pdfGenerator';
+import { compressImage } from './utils/imageUtils'; // L'import magique
 import { 
   FileText, 
   Loader2, 
@@ -10,15 +11,17 @@ import {
   Home, 
   Zap, 
   User, 
-  MapPin,
-  Save
+  Save,
+  Camera,
+  XCircle
 } from 'lucide-react';
 
-// Type definition (pour aider TypeScript)
+// Interfaces mises à jour avec les photos
 interface Element {
   nom: string;
   etat: string;
   com: string;
+  photos: string[]; // Nouveau champ : tableau de Base64
 }
 
 interface Piece {
@@ -28,8 +31,8 @@ interface Piece {
 
 const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false); // Petit loader si la compression prend du temps
 
-  // ÉTAT PRINCIPAL : C'est ici que sont stockées toutes les données de l'EDL
   const [data, setData] = useState({
     info: {
       type: "Entrée",
@@ -46,13 +49,45 @@ const Dashboard = () => {
       {
         nom: "Entrée",
         elements: [
-          { nom: "Porte", etat: "Bon état", com: "" },
-          { nom: "Murs", etat: "Bon état", com: "" },
-          { nom: "Sol", etat: "Bon état", com: "" }
+          { nom: "Porte", etat: "Bon état", com: "", photos: [] },
+          { nom: "Murs", etat: "Bon état", com: "", photos: [] },
+          { nom: "Sol", etat: "Bon état", com: "", photos: [] }
         ]
       }
     ] as Piece[]
   });
+
+  // --- GESTION DES PHOTOS ---
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, pieceIndex: number, elIndex: number) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsCompressing(true);
+      try {
+        const file = e.target.files[0];
+        // Compression de l'image
+        const compressedBase64 = await compressImage(file);
+        
+        // Ajout au state
+        const newPieces = [...data.pieces];
+        newPieces[pieceIndex].elements[elIndex].photos.push(compressedBase64);
+        setData({ ...data, pieces: newPieces });
+      } catch (err) {
+        console.error("Erreur compression", err);
+        alert("Impossible d'ajouter la photo.");
+      } finally {
+        setIsCompressing(false);
+        // Reset de l'input pour pouvoir remettre la même photo si besoin
+        e.target.value = '';
+      }
+    }
+  };
+
+  const removePhoto = (pieceIndex: number, elIndex: number, photoIndex: number) => {
+    if(confirm("Supprimer cette photo ?")) {
+        const newPieces = [...data.pieces];
+        newPieces[pieceIndex].elements[elIndex].photos = newPieces[pieceIndex].elements[elIndex].photos.filter((_, i) => i !== photoIndex);
+        setData({ ...data, pieces: newPieces });
+    }
+  };
 
   // --- GESTION DES INFOS GÉNÉRALES ---
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -87,9 +122,9 @@ const Dashboard = () => {
         pieces: [...data.pieces, { 
           nom: nomPiece, 
           elements: [
-            { nom: "Sol", etat: "Bon état", com: "" }, 
-            { nom: "Murs", etat: "Bon état", com: "" },
-            { nom: "Plafond", etat: "Bon état", com: "" }
+            { nom: "Sol", etat: "Bon état", com: "", photos: [] }, 
+            { nom: "Murs", etat: "Bon état", com: "", photos: [] },
+            { nom: "Plafond", etat: "Bon état", com: "", photos: [] }
           ] 
         }]
       });
@@ -103,19 +138,17 @@ const Dashboard = () => {
     }
   };
 
-  // --- GESTION DES ÉLÉMENTS DANS UNE PIÈCE ---
+  // --- GESTION DES ÉLÉMENTS ---
   const updateElement = (pieceIndex: number, elIndex: number, field: keyof Element, value: string) => {
     const newPieces = [...data.pieces];
-    newPieces[pieceIndex].elements[elIndex] = { 
-      ...newPieces[pieceIndex].elements[elIndex], 
-      [field]: value 
-    };
+    // @ts-ignore - TypeScript peut râler sur le type dynamique, on ignore ici
+    newPieces[pieceIndex].elements[elIndex][field] = value;
     setData({ ...data, pieces: newPieces });
   };
 
   const addElement = (pieceIndex: number) => {
     const newPieces = [...data.pieces];
-    newPieces[pieceIndex].elements.push({ nom: "Nouvel élément", etat: "Bon état", com: "" });
+    newPieces[pieceIndex].elements.push({ nom: "Nouvel élément", etat: "Bon état", com: "", photos: [] });
     setData({ ...data, pieces: newPieces });
   };
 
@@ -135,7 +168,6 @@ const Dashboard = () => {
     setIsGenerating(true);
     try {
       const html = generateEdlHtml(data);
-      // Nom du fichier : EDL_NomLocataire_Date.pdf
       const filename = `EDL_${data.info.locataire.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       await downloadPdf(html, filename);
     } catch (e) {
@@ -149,7 +181,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-slate-100 pb-20 font-sans">
       
-      {/* HEADER FIXE */}
+      {/* HEADER */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -164,19 +196,18 @@ const Dashboard = () => {
           
           <button
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || isCompressing}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow-md shadow-blue-500/20 transition flex items-center gap-2 text-sm disabled:opacity-70"
           >
             {isGenerating ? <Loader2 className="animate-spin" size={18}/> : <FileText size={18}/>}
             <span className="hidden sm:inline">Générer PDF</span>
-            <span className="sm:hidden">PDF</span>
           </button>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 mt-8 space-y-8">
 
-        {/* 1. INFOS GÉNÉRALES */}
+        {/* 1. INFOS */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2 font-bold text-slate-700">
             <User size={20}/> Informations Générales
@@ -209,7 +240,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* 2. COMPTEURS */}
+        {/* 2. COMPTEURS (Pas de changement ici, simplifié pour l'exemple) */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-slate-700">
@@ -222,43 +253,17 @@ const Dashboard = () => {
           <div className="p-6 space-y-4">
             {data.compteurs.map((c, idx) => (
               <div key={idx} className="flex flex-col md:flex-row gap-3 items-start md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <input 
-                  type="text" 
-                  value={c.type} 
-                  onChange={(e) => updateCompteur(idx, 'type', e.target.value)} 
-                  className="font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none w-32 md:w-40"
-                />
-                <input 
-                  type="text" 
-                  placeholder="N° Série" 
-                  value={c.num} 
-                  onChange={(e) => updateCompteur(idx, 'num', e.target.value)} 
-                  className="flex-1 p-2 border border-slate-200 rounded text-sm w-full"
-                />
-                <input 
-                  type="text" 
-                  placeholder="Index / Valeur" 
-                  value={c.valeur} 
-                  onChange={(e) => updateCompteur(idx, 'valeur', e.target.value)} 
-                  className="flex-1 p-2 border border-slate-200 rounded text-sm w-full font-mono text-blue-600 font-bold"
-                />
-                <input 
-                  type="text" 
-                  placeholder="Emplacement" 
-                  value={c.loc} 
-                  onChange={(e) => updateCompteur(idx, 'loc', e.target.value)} 
-                  className="flex-1 p-2 border border-slate-200 rounded text-sm w-full"
-                />
-                <button onClick={() => removeCompteur(idx)} className="text-red-400 hover:text-red-600 p-2">
-                  <Trash2 size={18}/>
-                </button>
+                 <input type="text" value={c.type} onChange={(e) => updateCompteur(idx, 'type', e.target.value)} className="font-bold bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none w-32 md:w-40" />
+                 <input type="text" placeholder="N° Série" value={c.num} onChange={(e) => updateCompteur(idx, 'num', e.target.value)} className="flex-1 p-2 border border-slate-200 rounded text-sm w-full" />
+                 <input type="text" placeholder="Index" value={c.valeur} onChange={(e) => updateCompteur(idx, 'valeur', e.target.value)} className="flex-1 p-2 border border-slate-200 rounded text-sm w-full font-mono text-blue-600 font-bold" />
+                 <input type="text" placeholder="Emplacement" value={c.loc} onChange={(e) => updateCompteur(idx, 'loc', e.target.value)} className="flex-1 p-2 border border-slate-200 rounded text-sm w-full" />
+                 <button onClick={() => removeCompteur(idx)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={18}/></button>
               </div>
             ))}
-            {data.compteurs.length === 0 && <p className="text-slate-400 text-sm italic text-center">Aucun compteur ajouté.</p>}
           </div>
         </section>
 
-        {/* 3. PIÈCES ET ÉTATS */}
+        {/* 3. PIÈCES ET PHOTOS */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -272,8 +277,7 @@ const Dashboard = () => {
 
           {data.pieces.map((piece, pIdx) => (
             <div key={pIdx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              {/* Entête de la pièce */}
-              <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between group">
+              <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <input 
                   type="text" 
                   value={piece.nom} 
@@ -285,30 +289,25 @@ const Dashboard = () => {
                   className="font-bold text-lg bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-slate-800"
                 />
                 <div className="flex gap-2">
-                  <button onClick={() => addElement(pIdx)} className="text-xs bg-white border border-slate-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-slate-600 px-3 py-1.5 rounded-md flex items-center gap-1 transition">
-                    <Plus size={14}/> Élément
-                  </button>
-                  <button onClick={() => removePiece(pIdx)} className="text-slate-400 hover:text-red-600 p-1.5 transition">
-                    <Trash2 size={18}/>
-                  </button>
+                   <button onClick={() => addElement(pIdx)} className="text-xs bg-white border border-slate-300 hover:bg-blue-50 text-slate-600 px-3 py-1.5 rounded-md flex items-center gap-1 transition"><Plus size={14}/> Élément</button>
+                   <button onClick={() => removePiece(pIdx)} className="text-slate-400 hover:text-red-600 p-1.5 transition"><Trash2 size={18}/></button>
                 </div>
               </div>
 
-              {/* Tableau des éléments */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
                     <tr>
                       <th className="px-6 py-3 w-1/4">Élément</th>
                       <th className="px-6 py-3 w-1/4">État</th>
-                      <th className="px-6 py-3 w-1/2">Commentaires</th>
+                      <th className="px-6 py-3 w-1/2">Commentaires & Photos</th>
                       <th className="px-2 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {piece.elements.map((el, eIdx) => (
                       <tr key={eIdx} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-3 align-top">
                           <input 
                             type="text" 
                             value={el.nom} 
@@ -316,7 +315,7 @@ const Dashboard = () => {
                             className="w-full bg-transparent font-medium text-slate-900 border-b border-transparent focus:border-blue-400 outline-none"
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-3 align-top">
                           <select 
                             value={el.etat} 
                             onChange={(e) => updateElement(pIdx, eIdx, 'etat', e.target.value)} 
@@ -337,39 +336,57 @@ const Dashboard = () => {
                         <td className="px-6 py-3">
                           <input 
                             type="text" 
-                            placeholder="..." 
+                            placeholder="Commentaire..." 
                             value={el.com} 
                             onChange={(e) => updateElement(pIdx, eIdx, 'com', e.target.value)} 
-                            className="w-full bg-transparent text-slate-600 border-b border-slate-200 focus:border-blue-400 outline-none"
+                            className="w-full bg-transparent text-slate-600 border-b border-slate-200 focus:border-blue-400 outline-none mb-3"
                           />
+                          
+                          {/* ZONE PHOTOS */}
+                          <div className="flex flex-wrap gap-2 items-center">
+                            {el.photos.map((photo, photoIdx) => (
+                              <div key={photoIdx} className="relative group w-12 h-12">
+                                <img src={photo} alt="miniature" className="w-full h-full object-cover rounded border border-slate-300" />
+                                <button 
+                                  onClick={() => removePhoto(pIdx, eIdx, photoIdx)}
+                                  className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition"
+                                >
+                                  <XCircle size={16} fill="white" />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-500 rounded border border-slate-300 w-12 h-12 flex items-center justify-center transition">
+                              <Camera size={20} />
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={(e) => handlePhotoUpload(e, pIdx, eIdx)}
+                              />
+                            </label>
+                          </div>
+
                         </td>
-                        <td className="px-2 py-3 text-right">
-                          <button onClick={() => removeElement(pIdx, eIdx)} className="text-slate-300 hover:text-red-500">
-                            <Trash2 size={16}/>
-                          </button>
+                        <td className="px-2 py-3 text-right align-top">
+                          <button onClick={() => removeElement(pIdx, eIdx)} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                {piece.elements.length === 0 && (
-                  <div className="p-6 text-center text-slate-400 italic text-sm">
-                    Aucun élément dans cette pièce. Cliquez sur "Élément" pour en ajouter.
-                  </div>
-                )}
               </div>
             </div>
           ))}
         </section>
 
-        {/* Bouton de sauvegarde final (aussi présent dans le header) */}
         <div className="flex justify-end pt-8">
            <button
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || isCompressing}
             className="bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-xl font-bold shadow-lg transition flex items-center gap-3 text-lg disabled:opacity-70"
           >
-            {isGenerating ? <Loader2 className="animate-spin" /> : <Save />}
+            {isGenerating || isCompressing ? <Loader2 className="animate-spin" /> : <Save />}
             Générer et Signer le PDF
           </button>
         </div>
