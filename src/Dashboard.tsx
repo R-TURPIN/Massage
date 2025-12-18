@@ -17,8 +17,8 @@ import {
   XCircle,
   PenTool,
   Eraser,
-  MapPin, // Ajout pour l'icône adresse
-  Search  // Ajout pour l'icône recherche
+  MapPin, 
+  Search 
 } from 'lucide-react';
 
 interface Element {
@@ -33,7 +33,6 @@ interface Piece {
   elements: Element[];
 }
 
-// Interface pour les résultats API Adresse
 interface AddressResult {
   properties: {
     label: string;
@@ -44,12 +43,11 @@ interface AddressResult {
 const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
-
-  // --- ETATS POUR L'AUTOCOMPLÉTION ---
+  
+  // États autocomplétion
   const [addressSuggestions, setAddressSuggestions] = useState<AddressResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Refs pour les signatures
   const sigLocataireRef = useRef<any>(null);
   const sigBailleurRef = useRef<any>(null);
 
@@ -77,13 +75,11 @@ const Dashboard = () => {
     ] as Piece[]
   });
 
-  // --- LOGIQUE AUTOCOMPLÉTION ---
+  // --- AUTOCOMPLÉTION ADRESSE ---
   const handleAddressInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // On met à jour le champ normalement
     setData({ ...data, info: { ...data.info, adresse: value } });
 
-    // Si plus de 3 caractères, on cherche
     if (value.length > 3) {
       try {
         const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(value)}&limit=5`);
@@ -91,7 +87,7 @@ const Dashboard = () => {
         setAddressSuggestions(json.features || []);
         setShowSuggestions(true);
       } catch (err) {
-        console.error("Erreur API Adresse", err);
+        console.error(err);
       }
     } else {
       setShowSuggestions(false);
@@ -103,20 +99,18 @@ const Dashboard = () => {
     setShowSuggestions(false);
   };
 
-  // --- LOGIQUE MÉTIER ---
+  // --- FONCTIONS EXISTANTES ---
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, pieceIndex: number, elIndex: number) => {
     if (e.target.files && e.target.files[0]) {
       setIsCompressing(true);
       try {
         const file = e.target.files[0];
         const compressedBase64 = await compressImage(file);
-        
         const newPieces = [...data.pieces];
         newPieces[pieceIndex].elements[elIndex].photos.push(compressedBase64);
         setData({ ...data, pieces: newPieces });
       } catch (err) {
-        console.error("Erreur compression", err);
-        alert("Impossible d'ajouter la photo.");
+        alert("Erreur photo");
       } finally {
         setIsCompressing(false);
         e.target.value = '';
@@ -125,7 +119,7 @@ const Dashboard = () => {
   };
 
   const removePhoto = (pieceIndex: number, elIndex: number, photoIndex: number) => {
-    if(confirm("Supprimer cette photo ?")) {
+    if(confirm("Supprimer ?")) {
         const newPieces = [...data.pieces];
         newPieces[pieceIndex].elements[elIndex].photos = newPieces[pieceIndex].elements[elIndex].photos.filter((_, i) => i !== photoIndex);
         setData({ ...data, pieces: newPieces });
@@ -152,7 +146,7 @@ const Dashboard = () => {
   };
 
   const addPiece = () => {
-    const nomPiece = prompt("Nom de la nouvelle pièce ?");
+    const nomPiece = prompt("Nom de la pièce ?");
     if (nomPiece) {
       setData({
         ...data,
@@ -169,7 +163,7 @@ const Dashboard = () => {
   };
 
   const removePiece = (index: number) => {
-    if (confirm("Supprimer cette pièce ?")) {
+    if (confirm("Supprimer ?")) {
       const newPieces = data.pieces.filter((_, i) => i !== index);
       setData({ ...data, pieces: newPieces });
     }
@@ -196,29 +190,28 @@ const Dashboard = () => {
 
   const handleGenerate = async () => {
     if (!data.info.locataire || !data.info.adresse) {
-      alert("⚠️ Merci de remplir au moins le nom du locataire et l'adresse.");
+      alert("⚠️ Nom et adresse requis.");
       return;
     }
     setIsGenerating(true);
     try {
       const signatures = {
-        locataire: sigLocataireRef.current && !sigLocataireRef.current.isEmpty() ? sigLocataireRef.current.toDataURL() : null,
-        bailleur: sigBailleurRef.current && !sigBailleurRef.current.isEmpty() ? sigBailleurRef.current.toDataURL() : null
+        locataire: sigLocataireRef.current?.isEmpty() ? null : sigLocataireRef.current.toDataURL(),
+        bailleur: sigBailleurRef.current?.isEmpty() ? null : sigBailleurRef.current.toDataURL()
       };
       const html = generateEdlHtml({ ...data, signatures });
       const filename = `EDL_${data.info.locataire.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       await downloadPdf(html, filename);
     } catch (e) {
-      console.error(e);
-      alert("Erreur lors de la génération PDF.");
+      alert("Erreur PDF");
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    // On ajoute un onClick global pour fermer les suggestions si on clique ailleurs
     <div className="min-h-screen bg-slate-100 pb-20 font-sans" onClick={() => setShowSuggestions(false)}>
+      
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -236,22 +229,14 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 mt-8 space-y-8">
-        {/* INFOS */}
+        
+        {/* INFOS + AUTOCOMPLETE */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2 font-bold text-slate-700"><User size={20}/> Informations Générales</div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label><select name="type" value={data.info.type} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"><option>Entrée</option><option>Sortie</option><option>Pré-état des lieux</option></select></div>
+            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label><input type="text" name="date" value={data.info.date} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" /></div>
             
-            <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
-                <select name="type" value={data.info.type} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg"><option>Entrée</option><option>Sortie</option><option>Pré-état des lieux</option></select>
-            </div>
-            
-            <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
-                <input type="text" name="date" value={data.info.date} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" />
-            </div>
-            
-            {/* --- CHAMP ADRESSE AVEC AUTOCOMPLETION --- */}
             <div className="md:col-span-2 relative z-20">
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
                 Adresse <span className="text-[10px] bg-blue-100 text-blue-700 px-2 rounded-full flex items-center gap-1"><Search size={10}/> Auto-complétion</span>
@@ -267,8 +252,6 @@ const Dashboard = () => {
                   className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:border-blue-500 outline-none" 
                 />
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                
-                {/* LISTE DÉROULANTE */}
                 {showSuggestions && addressSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto z-50">
                     {addressSuggestions.map((suggestion, idx) => (
@@ -288,7 +271,6 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
-            {/* --------------------------------------- */}
 
             <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Locataire(s)</label><input type="text" name="locataire" placeholder="Nom..." value={data.info.locataire} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold" /></div>
             <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Bailleur / Mandataire</label><input type="text" name="bailleur" value={data.info.bailleur} onChange={handleInfoChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg" /></div>
@@ -314,7 +296,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* PIÈCES */}
+        {/* PIECES */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Home size={24} className="text-blue-600"/> Pièces & Équipements</h2>
