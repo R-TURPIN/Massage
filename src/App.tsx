@@ -13,8 +13,36 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { pb } from './pocketbase';
+
+// On définit les composants AVANT pour être sûr qu'ils existent
+const ServiceCard = ({ icon, title, subtitle, features, onClick }: any) => (
+  <div onClick={onClick} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-xl transition cursor-pointer group">
+    <div className="text-brand-600 mb-6 bg-brand-50 w-16 h-16 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition">{icon}</div>
+    <h3 className="text-2xl font-bold text-slate-900 mb-1">{title}</h3>
+    <p className="text-brand-600 font-medium mb-6 text-sm uppercase tracking-wide">{subtitle}</p>
+    <ul className="space-y-3 mb-8">
+      {features.map((f: string, i: number) => (
+        <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
+          <CheckCircle size={16} className="text-brand-500 mt-0.5" /> <span>{f}</span>
+        </li>
+      ))}
+    </ul>
+    <div className="text-brand-700 font-bold flex items-center gap-2 text-sm group-hover:translate-x-2 transition">
+      Demander un prix <ArrowRight size={16}/>
+    </div>
+  </div>
+);
+
+const MachineItem = ({ name, desc }: { name: string, desc: string }) => (
+  <li className="flex gap-4 items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+    <div className="bg-white p-2 rounded shadow-sm text-brand-600"><Settings size={20} /></div>
+    <div>
+      <h4 className="font-bold text-slate-900">{name}</h4>
+      <p className="text-sm text-slate-600 leading-snug">{desc}</p>
+    </div>
+  </li>
+);
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -116,7 +144,7 @@ const App = () => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+          <div>
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-5 py-1.5 mb-8 backdrop-blur-md">
               <Settings size={16} className="text-brand-400 animate-spin-slow" />
               <span className="text-sm font-semibold text-white tracking-wide">Atelier basé à Châteauroux - Livraison France J+2</span>
@@ -141,7 +169,7 @@ const App = () => {
                 Découvrir nos solutions
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -284,33 +312,5 @@ const App = () => {
     </div>
   );
 };
-
-const ServiceCard = ({ icon, title, subtitle, features, onClick }: any) => (
-  <div onClick={onClick} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-xl transition cursor-pointer group">
-    <div className="text-brand-600 mb-6 bg-brand-50 w-16 h-16 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition">{icon}</div>
-    <h3 className="text-2xl font-bold text-slate-900 mb-1">{title}</h3>
-    <p className="text-brand-600 font-medium mb-6 text-sm uppercase tracking-wide">{subtitle}</p>
-    <ul className="space-y-3 mb-8">
-      {features.map((f: string, i: number) => (
-        <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
-          <CheckCircle size={16} className="text-brand-500 mt-0.5" /> <span>{f}</span>
-        </li>
-      ))}
-    </ul>
-    <div className="text-brand-700 font-bold flex items-center gap-2 text-sm group-hover:translate-x-2 transition">
-      Demander un prix <ArrowRight size={16}/>
-    </div>
-  </div>
-);
-
-const MachineItem = ({ name, desc }: { name: string, desc: string }) => (
-  <li className="flex gap-4 items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
-    <div className="bg-white p-2 rounded shadow-sm text-brand-600"><Settings size={20} /></div>
-    <div>
-      <h4 className="font-bold text-slate-900">{name}</h4>
-      <p className="text-sm text-slate-600 leading-snug">{desc}</p>
-    </div>
-  </li>
-);
 
 export default App;
