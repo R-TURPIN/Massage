@@ -1,14 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <title>Axom Manufacture | Impression 3D & Usinage CNC</title>
-    <meta name="description" content="Atelier de fabrication numérique. Impression 3D FDM, Gravure Laser et Fraisage CNC pour les pros." />
+    <title>AXOM Manufacture | Impression 3D & Usinage CNC</title>
+    <meta name="description" content="Atelier de fabrication numérique à Châteauroux. Impression 3D FDM, Gravure Laser et CNC pour les professionnels." />
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script>
       tailwind.config = {
         theme: {
@@ -25,21 +23,20 @@
                 300: '#7dd3fc',
                 400: '#38bdf8',
                 500: '#0ea5e9',
-                600: '#2563eb', /* Le Bleu Roi du site Immo */
+                600: '#2563eb', // Bleu Roi Industriel
                 700: '#0369a1',
                 800: '#075985',
                 900: '#0c4a6e',
-                950: '#082f49',
+                950: '#082f49', // Bleu Nuit Profond
               }
             }
           }
         }
       }
     </script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-slate-50 text-slate-900 antialiased scroll-smooth">
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-brand-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
