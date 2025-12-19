@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
 import { 
   CheckCircle, 
-  MapPin, 
   Printer, 
   Cpu, 
   Zap, 
   Menu, 
   X, 
-  ShieldCheck, 
-  Briefcase, 
   ArrowRight, 
   Box, 
-  ChevronDown, 
   Loader2,
   Settings,
-  Phone, // <-- C'était lui le coupable !
-  Mail   // <-- Et lui !
+  Phone,
+  Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pb } from './pocketbase';
@@ -24,7 +20,6 @@ const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedService, setSelectedService] = useState("");
   
-  // États pour le formulaire
   const [formData, setFormData] = useState({
     nom_complet: '',
     email: '',
