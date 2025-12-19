@@ -8,15 +8,14 @@ export const generateQuoteHtml = (data: any, res: any) => {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: 'Helvetica', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px; }
-        .logo { font-size: 24px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: -1px; }
-        .box { background: #f1f5f9; padding: 25px; border-radius: 12px; margin-bottom: 40px; }
+        body { font-family: 'Helvetica', sans-serif; padding: 40px; color: #1e293b; }
+        .header { display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 40px; }
+        .logo { font-size: 24px; font-weight: 900; color: #0f172a; text-transform: uppercase; }
+        .box { background: #f1f5f9; padding: 25px; border-radius: 8px; margin-bottom: 40px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 12px; text-transform: uppercase; color: #64748b; }
-        td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        th { text-align: left; padding: 12px; background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 11px; text-transform: uppercase; color: #64748b; }
+        td { padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         .total-row td { border-top: 2px solid #0f172a; border-bottom: none; font-weight: bold; font-size: 16px; padding-top: 20px; }
-        .highlight { color: #2563eb; font-size: 20px; }
       </style>
     </head>
     <body>
@@ -29,19 +28,19 @@ export const generateQuoteHtml = (data: any, res: any) => {
       </div>
 
       <div class="box">
-        <h3 style="margin-top:0; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing: 1px;">Destinataire</h3>
+        <h3 style="margin-top:0; color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing: 1px;">Client</h3>
         <div style="font-size:20px; font-weight:bold; margin-bottom: 5px;">${data.client.name}</div>
         <div>Projet : <strong>${data.client.project}</strong></div>
       </div>
 
       <table>
-        <thead><tr><th>Désignation</th><th style="text-align:right">Montant HT</th></tr></thead>
+        <thead><tr><th>Désignation</th><th style="text-align:right">Total HT</th></tr></thead>
         <tbody>
           <tr>
             <td>
               <strong>Fabrication Additive / Usinage</strong><br/>
-              <span style="font-size:13px; color:#64748b">
-                Technologie : ${data.params.printer} <br/>
+              <span style="font-size:12px; color:#64748b">
+                Technologie : ${data.params.printer}<br/>
                 Matériau : ${data.params.material} (${data.params.weight}g)
               </span>
             </td>
@@ -49,15 +48,15 @@ export const generateQuoteHtml = (data: any, res: any) => {
           </tr>
           <tr>
             <td>
-              <strong>Préparation & Lancement</strong><br/>
-              <span style="font-size:13px; color:#64748b">Frais fixes de dossier et setup machine</span>
+              <strong>Frais de dossier & Préparation</strong><br/>
+              <span style="font-size:12px; color:#64748b">Lancement machine, slicing, setup</span>
             </td>
-            <td style="text-align:right">${(data.params.setupFee * data.params.margin).toFixed(2)} €</td>
+            <td style="text-align:right">${data.params.setupFee.toFixed(2)} €</td>
           </tr>
           <tr>
             <td>
               <strong>Finitions & Main d'œuvre</strong><br/>
-              <span style="font-size:13px; color:#64748b">Post-traitement et contrôle qualité (${data.params.laborTime}h)</span>
+              <span style="font-size:12px; color:#64748b">Post-traitement manuel (${data.params.laborTime}h)</span>
             </td>
             <td style="text-align:right">${(res.laborCost * data.params.margin).toFixed(2)} €</td>
           </tr>
@@ -72,14 +71,13 @@ export const generateQuoteHtml = (data: any, res: any) => {
           </tr>
           <tr>
             <td style="text-align:right; border:none; padding-top:10px;"><strong>NET À PAYER</strong></td>
-            <td style="text-align:right; border:none; padding-top:10px;" class="highlight">${(res.sellPrice * 1.2).toFixed(2)} €</td>
+            <td style="text-align:right; border:none; padding-top:10px; color:#2563eb; font-size:20px; font-weight:bold;">${(res.sellPrice * 1.2).toFixed(2)} €</td>
           </tr>
         </tbody>
       </table>
 
       <div style="margin-top:80px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px;">
-        Validité de l'offre : 1 mois • AXOM MANUFACTURE - Châteauroux (36) <br/>
-        SIRET : EN COURS D'IMMATRICULATION
+        Validité : 1 mois • AXOM MANUFACTURE - Châteauroux (36)
       </div>
     </body>
     </html>
