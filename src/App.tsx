@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { 
   CheckCircle, 
   MapPin, 
-  Printer, // Remplacé
-  Cpu, // Pour la CNC
-  Zap, // Pour le Laser
+  Printer, 
+  Cpu, 
+  Zap, 
   Menu, 
   X, 
   ShieldCheck, 
@@ -13,7 +13,9 @@ import {
   Box, 
   ChevronDown, 
   Loader2,
-  Settings
+  Settings,
+  Phone, // <-- C'était lui le coupable !
+  Mail   // <-- Et lui !
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pb } from './pocketbase';
@@ -57,15 +59,11 @@ const App = () => {
     setIsSubmitting(true);
 
     try {
-      // Sauvegarde dans PocketBase (Collection 'projets_3d' à créer ou utiliser 'demandes')
       await pb.collection('demandes').create({
         ...formData,
-        pack: selectedService || 'Projet Sur Mesure', // On réutilise le champ 'pack'
-        ville: 'France' // Champ technique
+        pack: selectedService || 'Projet Sur Mesure',
+        ville: 'France' 
       });
-
-      // Webhook Discord (Optionnel, à configurer si tu veux la notif instantanée)
-      // await fetch('TON_WEBHOOK_DISCORD', { ... });
 
       alert("✅ Projet reçu ! Nous analysons votre demande et vous envoyons un devis sous 24h.");
       setFormData({ nom_complet: '', email: '', telephone: '', societe: '', message: '' });
@@ -203,7 +201,6 @@ const App = () => {
               </ul>
             </div>
             <div className="relative h-[400px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
-              {/* Tu pourras mettre une vraie photo de ton atelier ici */}
               <div className="absolute inset-0 flex items-center justify-center text-slate-700">
                 <span className="text-9xl opacity-10 font-bold">ATELIER</span>
               </div>
@@ -275,7 +272,19 @@ const App = () => {
       </section>
 
       <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-900 text-center">
-        <p>&copy; {new Date().getFullYear()} AXOM Manufacture. Atelier situé à Châteauroux (36).</p>
+        <div className="flex flex-col items-center gap-4">
+          <p>&copy; {new Date().getFullYear()} AXOM Manufacture. Atelier situé à Châteauroux (36).</p>
+          <div className="flex gap-6 justify-center text-sm">
+            <div className="flex items-center gap-2">
+              <Mail size={16} className="text-brand-500" />
+              <span>contact@axom.fr</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone size={16} className="text-brand-500" />
+              <span>06 XX XX XX XX</span>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
