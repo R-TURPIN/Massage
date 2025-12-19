@@ -1,68 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { generateQuoteHtml } from './utils/quoteTemplate';
 import { downloadPdf } from './utils/pdfGenerator';
-import { Calculator, Save, Loader2, ArrowLeft, Settings, TrendingUp } from 'lucide-react';
+import { Calculator, Save, Loader2, ArrowLeft, TrendingUp, Package } from 'lucide-react';
 
 const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Données de base
   const [data, setData] = useState({
     client: { name: "", project: "" },
     params: { 
-      printer: "FDM Standard", 
-      material: "PLA", // Nouveau
+      printer: "Standard FDM", // Nom générique
+      material: "PLA", 
       printTime: 0, 
       weight: 0, 
-      setupFee: 5, // Frais de lancement par défaut
-      laborTime: 0, 
-      laborRate: 30, 
-      margin: 2.0 // Marge plus agressive par défaut
+      setupFee: 10, // Frais de dossier par défaut (rentabilité !)
+      laborTime: 0.25, // 15min de main d'oeuvre par défaut
+      laborRate: 40, // Taux horaire pro
+      margin: 2.0 
     }
   });
   
   const [res, setRes] = useState<any>(null);
 
-  // Configuration des prix (Facile à changer ici)
+  // Configuration (Tu peux changer les prix ici)
   const materials: any = {
-    'PLA': 20,    // €/kg
-    'PETG': 25,
-    'ABS': 25,
-    'TPU (Flexible)': 35,
-    'ASA': 30,
-    'Résine': 45
+    'PLA (Standard)': 20,
+    'PETG (Résistant)': 25,
+    'ABS/ASA (Tech)': 30,
+    'TPU (Flexible)': 40,
+    'Nylon-CF (Indus)': 80,
+    'Résine (Détail)': 50
   };
 
   const machines: any = {
-    'FDM Standard': 0.20, // Coût élec + amortissement /h
-    'FDM Haute Vitesse': 0.35,
-    'CNC': 5.00
+    'Standard FDM': 0.25,
+    'Haute Vitesse': 0.40,
+    'Grand Format': 0.60,
+    'CNC': 5.00,
+    'Laser': 2.00
   };
 
-  // Calcul automatique dès qu'une valeur change
   const calculate = () => {
     const { printer, material, printTime, weight, setupFee, laborTime, laborRate, margin } = data.params;
     
-    const machineCost = printTime * (machines[printer] || 0.20);
+    const machineCost = printTime * (machines[printer] || 0.25);
     const materialPrice = materials[material] || 20;
     const materialCost = (weight / 1000) * materialPrice;
     const laborCost = laborTime * laborRate;
     
-    // Coût de revient (Ce que ça te coûte vraiment)
-    const costPrice = machineCost + materialCost + laborCost;
+    // Coût sec (ce que tu sors de ta poche)
+    const dryCost = machineCost + materialCost;
     
-    // Prix de vente (Ce que le client paie)
-    // On applique la marge sur la prod, et on ajoute les frais fixes à la fin (ou avant marge, au choix. Ici avant pour marger dessus).
-    const subTotal = costPrice + setupFee; 
-    const sellPrice = subTotal * margin;
+    // Coût complet (avec ton temps)
+    const totalCost = dryCost + laborCost;
     
-    setRes({ machineCost, materialCost, laborCost, costPrice, sellPrice, materialPrice });
+    // Prix de vente
+    const sellPrice = (totalCost * margin) + setupFee;
+    
+    setRes({ machineCost, materialCost, laborCost, totalCost, sellPrice, materialPrice });
   };
 
-  // Recalculer automatiquement quand les params changent
-  useEffect(() => {
-    calculate();
-  }, [data.params]);
+  useEffect(() => { calculate(); }, [data.params]);
 
   const genPDF = async () => {
     if (!data.client.name) return alert("Nom du client manquant !");
@@ -74,112 +72,98 @@ const Dashboard = () => {
     finally { setIsGenerating(false); }
   };
 
-  const getMarginLabel = (m: number) => {
-    if (m < 1.5) return { text: "Faible", color: "text-red-500" };
-    if (m < 2.5) return { text: "Standard", color: "text-blue-500" };
-    return { text: "Excellente", color: "text-green-500" };
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-slate-100 font-sans p-4 md:p-8 text-slate-900">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8 bg-white p-4 rounded-xl shadow-sm">
+        <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <a href="/" className="bg-slate-100 p-2 rounded-lg text-slate-500 hover:text-brand-600 transition"><ArrowLeft size={20}/></a>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Calculator className="text-brand-600"/> Calculateur AXOM</h1>
-              <p className="text-xs text-slate-500">Outil de chiffrage interne</p>
-            </div>
-          </div>
-          <div className="text-right hidden md:block">
-            <div className="text-xs text-slate-400 uppercase font-bold">Date</div>
-            <div className="font-mono text-sm">{new Date().toLocaleDateString()}</div>
+            <a href="/" className="bg-white p-2 rounded-full text-slate-400 hover:text-brand-600 transition shadow-sm"><ArrowLeft/></a>
+            <h1 className="text-2xl font-bold flex items-center gap-2"><Calculator className="text-brand-600"/> Pricing AXOM</h1>
           </div>
         </header>
 
         <div className="grid lg:grid-cols-3 gap-6">
           
-          {/* COLONNE GAUCHE : Paramètres */}
           <div className="lg:col-span-2 space-y-6">
-            
             {/* 1. Client */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Settings size={18} className="text-slate-400"/> Projet</h2>
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h2 className="font-bold text-sm uppercase tracking-widest text-slate-400 mb-4">Projet</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <input placeholder="Nom Client / Société" className="p-3 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none" value={data.client.name} onChange={e=>setData({...data, client:{...data.client, name:e.target.value}})}/>
-                <input placeholder="Nom du Projet" className="p-3 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none" value={data.client.project} onChange={e=>setData({...data, client:{...data.client, project:e.target.value}})}/>
+                <input placeholder="Client / Société" className="p-3 border rounded bg-slate-50 w-full" value={data.client.name} onChange={e=>setData({...data, client:{...data.client, name:e.target.value}})}/>
+                <input placeholder="Référence Projet" className="p-3 border rounded bg-slate-50 w-full" value={data.client.project} onChange={e=>setData({...data, client:{...data.client, project:e.target.value}})}/>
               </div>
             </div>
 
-            {/* 2. Fabrication */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Printer size={18} className="text-slate-400"/> Fabrication</h2>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
+            {/* 2. Technique */}
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h2 className="font-bold text-sm uppercase tracking-widest text-slate-400 mb-4">Paramètres Fabrication</h2>
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Machine</label>
-                  <select className="w-full p-2.5 border rounded-lg bg-slate-50 font-medium" value={data.params.printer} onChange={e=>setData({...data, params:{...data.params, printer:e.target.value}})}>
+                  <label className="text-xs font-bold mb-1 block">Technologie</label>
+                  <select className="w-full p-3 border rounded font-medium" value={data.params.printer} onChange={e=>setData({...data, params:{...data.params, printer:e.target.value}})}>
                     {Object.keys(machines).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Matériau</label>
-                  <select className="w-full p-2.5 border rounded-lg bg-slate-50 font-medium" value={data.params.material} onChange={e=>setData({...data, params:{...data.params, material:e.target.value}})}>
+                  <label className="text-xs font-bold mb-1 block">Matériau</label>
+                  <select className="w-full p-3 border rounded font-medium" value={data.params.material} onChange={e=>setData({...data, params:{...data.params, material:e.target.value}})}>
                     {Object.keys(materials).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Frais Lancement (€)</label>
-                  <input type="number" className="w-full p-2.5 border rounded-lg font-bold text-brand-600 bg-brand-50" value={data.params.setupFee} onChange={e=>setData({...data, params:{...data.params, setupFee:parseFloat(e.target.value)}})}/>
-                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-xs text-slate-500 uppercase">Temps (h)</label><input type="number" className="w-full p-3 border rounded-lg" value={data.params.printTime} onChange={e=>setData({...data, params:{...data.params, printTime:parseFloat(e.target.value)}})}/></div>
-                <div><label className="text-xs text-slate-500 uppercase">Poids (g)</label><input type="number" className="w-full p-3 border rounded-lg" value={data.params.weight} onChange={e=>setData({...data, params:{...data.params, weight:parseFloat(e.target.value)}})}/></div>
+              <div className="grid grid-cols-3 gap-4">
+                <div><label className="text-xs text-slate-500">Temps (h)</label><input type="number" className="w-full p-3 border rounded" value={data.params.printTime} onChange={e=>setData({...data, params:{...data.params, printTime:parseFloat(e.target.value)}})}/></div>
+                <div><label className="text-xs text-slate-500">Poids (g)</label><input type="number" className="w-full p-3 border rounded" value={data.params.weight} onChange={e=>setData({...data, params:{...data.params, weight:parseFloat(e.target.value)}})}/></div>
+                <div><label className="text-xs text-slate-500">Post-prod (h)</label><input type="number" step="0.25" className="w-full p-3 border rounded" value={data.params.laborTime} onChange={e=>setData({...data, params:{...data.params, laborTime:parseFloat(e.target.value)}})}/></div>
               </div>
             </div>
 
-            {/* 3. Rentabilité */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-slate-400"/> Rentabilité</h2>
+            {/* 3. Business */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-brand-600">
+              <h2 className="font-bold text-sm uppercase tracking-widest text-slate-400 mb-4">Rentabilité</h2>
               <div className="grid grid-cols-3 gap-4">
-                <div><label className="text-xs text-slate-500 uppercase">Post-prod (h)</label><input type="number" className="w-full p-3 border rounded-lg" value={data.params.laborTime} onChange={e=>setData({...data, params:{...data.params, laborTime:parseFloat(e.target.value)}})}/></div>
-                <div><label className="text-xs text-slate-500 uppercase">Taux Horaire (€)</label><input type="number" className="w-full p-3 border rounded-lg" value={data.params.laborRate} onChange={e=>setData({...data, params:{...data.params, laborRate:parseFloat(e.target.value)}})}/></div>
                 <div>
-                  <label className="text-xs font-bold text-brand-600 uppercase flex justify-between">Marge (x) <span className={getMarginLabel(data.params.margin).color}>{getMarginLabel(data.params.margin).text}</span></label>
-                  <input type="number" step="0.1" className="w-full p-3 border-2 border-brand-100 rounded-lg font-bold text-brand-600" value={data.params.margin} onChange={e=>setData({...data, params:{...data.params, margin:parseFloat(e.target.value)}})}/>
+                  <label className="text-xs font-bold block mb-1">Frais Dossier (€)</label>
+                  <input type="number" className="w-full p-3 border rounded font-bold text-brand-600" value={data.params.setupFee} onChange={e=>setData({...data, params:{...data.params, setupFee:parseFloat(e.target.value)}})}/>
+                </div>
+                <div>
+                  <label className="text-xs font-bold block mb-1">Taux Horaire (€)</label>
+                  <input type="number" className="w-full p-3 border rounded" value={data.params.laborRate} onChange={e=>setData({...data, params:{...data.params, laborRate:parseFloat(e.target.value)}})}/>
+                </div>
+                <div>
+                  <label className="text-xs font-bold block mb-1">Coeff. Marge</label>
+                  <input type="number" step="0.1" className="w-full p-3 border rounded font-bold" value={data.params.margin} onChange={e=>setData({...data, params:{...data.params, margin:parseFloat(e.target.value)}})}/>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* COLONNE DROITE : Résultat Live */}
+          {/* Résultat Live */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-brand-600 sticky top-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-6">Structure du Prix</h3>
+            <div className="bg-slate-900 text-white p-8 rounded-xl shadow-xl sticky top-6">
+              <h3 className="text-lg font-serif italic mb-6 opacity-80">Estimation Finale</h3>
               
-              <div className="space-y-3 text-sm text-slate-600 mb-6">
-                <div className="flex justify-between"><span>Matière ({data.params.material})</span> <span>{res?.materialCost.toFixed(2)} €</span></div>
-                <div className="flex justify-between"><span>Machine</span> <span>{res?.machineCost.toFixed(2)} €</span></div>
+              <div className="space-y-3 text-sm opacity-70 mb-8 border-b border-white/10 pb-6">
+                <div className="flex justify-between"><span>Machine + Matière</span> <span>{(res?.machineCost + res?.materialCost).toFixed(2)} €</span></div>
                 <div className="flex justify-between"><span>Main d'œuvre</span> <span>{res?.laborCost.toFixed(2)} €</span></div>
-                <div className="flex justify-between font-bold text-brand-600 bg-brand-50 p-2 rounded"><span>Frais Fixes</span> <span>{data.params.setupFee.toFixed(2)} €</span></div>
-                <div className="border-t pt-2 mt-2 flex justify-between text-xs text-slate-400"><span>Coûtant (Break-even)</span> <span>{(res?.costPrice + data.params.setupFee).toFixed(2)} €</span></div>
+                <div className="flex justify-between text-brand-300"><span>Frais Fixes</span> <span>{data.params.setupFee.toFixed(2)} €</span></div>
               </div>
 
-              <div className="bg-slate-900 text-white p-6 rounded-xl text-center mb-6">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Prix de vente HT</span>
-                <div className="text-4xl font-bold mt-2">{res?.sellPrice.toFixed(2)} €</div>
-                <div className="text-xs text-slate-400 mt-1">TTC (20%) : {(res?.sellPrice * 1.2).toFixed(2)} €</div>
+              <div className="text-center mb-8">
+                <div className="text-xs font-bold uppercase tracking-widest opacity-50">Total HT Client</div>
+                <div className="text-5xl font-bold mt-2 text-white">{res?.sellPrice.toFixed(2)}<span className="text-xl">€</span></div>
+                <div className="text-xs opacity-50 mt-2">TTC: {(res?.sellPrice * 1.2).toFixed(2)} €</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-center text-xs font-bold text-slate-500 mb-6">
-                <div className="bg-slate-100 p-2 rounded">Net Pocket : {((res?.sellPrice || 0) - (res?.costPrice || 0) - data.params.setupFee).toFixed(2)} €</div>
-                <div className="bg-slate-100 p-2 rounded">Marge : {(((res?.sellPrice || 0) - (res?.costPrice || 0) - data.params.setupFee) / (res?.sellPrice || 1) * 100).toFixed(0)}%</div>
+              <div className="bg-white/10 p-4 rounded-lg mb-6 text-center">
+                <div className="text-xs uppercase tracking-widest mb-1 opacity-60">Marge Nette</div>
+                <div className="text-xl font-bold text-green-400">
+                  {((res?.sellPrice || 0) - (res?.totalCost || 0)).toFixed(2)} €
+                </div>
               </div>
 
-              <button onClick={genPDF} disabled={isGenerating} className="w-full bg-brand-600 text-white font-bold py-4 rounded-xl hover:bg-brand-700 transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
-                {isGenerating ? <Loader2 className="animate-spin"/> : <Save size={20}/>} Générer Devis PDF
+              <button onClick={genPDF} disabled={isGenerating} className="w-full bg-brand-600 text-white font-bold py-4 rounded-lg hover:bg-brand-500 transition flex items-center justify-center gap-2">
+                {isGenerating ? <Loader2 className="animate-spin"/> : <Save size={20}/>} Générer le PDF
               </button>
             </div>
           </div>
